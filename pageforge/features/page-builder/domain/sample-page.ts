@@ -23,7 +23,7 @@ export const samplePage: PageConfig = {
       type: "hero",
       enabled: true,
       props: {
-        title: "Automate your workflow with AI",
+        title: "Build your business faster",
         description:
           "Build faster workflows without repetitive manual work.",
         primaryCtaText: "Get Started",

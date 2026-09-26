@@ -1,39 +1,32 @@
-# PageForge-AI-powered-visual-landing-page-builder
+# PageForge
 
 A configuration-driven landing page builder built with
-React, TypeScript and Supabase.
+Next.js, TypeScript and Tailwind CSS.
 
-## Features
+## Product
 
-- Template-based page creation
-- Configuration-driven rendering
-- Drag-and-drop sections
-- Live preview
-- Responsive preview
-- Draft / published versions
-- Autosave
-- Version history
-- Authentication
-- Public page URLs
+PageForge allows users to:
+
+- Choose a landing page template
+- Customize page sections
+- Preview the page
+- Save drafts
+- Publish pages
+- Share public landing page URLs
 
 ## Architecture
 
-Page Config
-    ↓
-Section Registry
-    ↓
-Dynamic Renderer
-    ↓
-Reusable React Components
-
-## Tech Stack
-
-React
-TypeScript
-Vite
-Supabase
-Zustand
-Tailwind
-dnd-kit
-Vitest
-Playwright
+```text
+                    PageForge
+                       |
+        +--------------+--------------+
+        |                             |
+     Dashboard                    Public Pages
+        |                             |
+     Editor                       Renderer
+        |                             |
+        +-------------+-------------+
+                      |
+                 PageConfig
+                      |
+                  Database

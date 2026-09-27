@@ -1,12 +1,10 @@
-import type { HeroProps } from "../../domain/page-schema";
+import type { HeroProps } from '../../domain/page-schema';
 
 type HeroSectionProps = {
   props: HeroProps;
 };
 
-export default function HeroSection({
-  props,
-}: HeroSectionProps) {
+export default function HeroSection({ props }: HeroSectionProps) {
   return (
     <section className="border-b border-gray-200 bg-white">
       <div className="mx-auto grid min-h-[560px] max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:px-8">

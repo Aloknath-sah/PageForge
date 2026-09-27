@@ -1,8 +1,8 @@
 export const SECTION_TYPES = [
-  "hero",
-  "features",
-  "testimonials",
-  "cta",
+  'hero',
+  'features',
+  'testimonials',
+  'cta',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -13,29 +13,32 @@ export type HeroProps = {
   primaryCtaText: string;
   primaryCtaUrl: string;
   imageUrl?: string;
-  subtitle?: string;
+};
+
+export type FeatureItem = {
+  id: string;
+  title: string;
+  description: string;
+  icon?: string;
 };
 
 export type FeaturesProps = {
   title: string;
   description?: string;
-  items: Array<{
-    id: string;
-    title: string;
-    description: string;
-    icon?: string;
-  }>;
+  items: FeatureItem[];
+};
+
+export type TestimonialItem = {
+  id: string;
+  name: string;
+  role?: string;
+  quote: string;
+  avatarUrl?: string;
 };
 
 export type TestimonialsProps = {
   title: string;
-  items: Array<{
-    id: string;
-    name: string;
-    role?: string;
-    quote: string;
-    avatarUrl?: string;
-  }>;
+  items: TestimonialItem[];
 };
 
 export type CtaProps = {
@@ -52,32 +55,26 @@ type BaseSection<TType extends SectionType, TProps> = {
   props: TProps;
 };
 
-export type HeroSection = BaseSection<"hero", HeroProps>;
+export type HeroSection = BaseSection<'hero', HeroProps>;
 
-export type FeaturesSection = BaseSection<
-  "features",
-  FeaturesProps
->;
+export type FeaturesSection = BaseSection<'features', FeaturesProps>;
 
 export type TestimonialsSection = BaseSection<
-  "testimonials",
+  'testimonials',
   TestimonialsProps
 >;
 
-export type CtaSection = BaseSection<"cta", CtaProps>;
+export type CtaSection = BaseSection<'cta', CtaProps>;
 
 export type PageSection =
-  | HeroSection
-  | FeaturesSection
-  | TestimonialsSection
-  | CtaSection;
+  HeroSection | FeaturesSection | TestimonialsSection | CtaSection;
 
 export type PageTheme = {
   primaryColor: string;
   backgroundColor: string;
   textColor: string;
   fontFamily: string;
-  borderRadius: "none" | "small" | "medium" | "large";
+  borderRadius: 'none' | 'small' | 'medium' | 'large';
 };
 
 export type PageSeo = {
@@ -88,10 +85,7 @@ export type PageSeo = {
 
 export type PageConfig = {
   schemaVersion: number;
-
   seo: PageSeo;
-
   theme: PageTheme;
-
   sections: PageSection[];
 };

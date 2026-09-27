@@ -1,12 +1,8 @@
-"use client";
+'use client';
 
-import type {
-  ChangeEvent,
-} from "react";
+import type { ChangeEvent } from 'react';
 
-import type {
-  PropertyFieldType,
-} from "../../domain/section-properties";
+import type { PropertyFieldType } from '../../domain/section-properties';
 
 type PropertyFieldProps = {
   label: string;
@@ -26,9 +22,7 @@ export default function PropertyField({
   onChange,
 }: PropertyFieldProps) {
   const handleChange = (
-    event: ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement
-    >,
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     onChange(event.target.value);
   };
@@ -45,7 +39,7 @@ export default function PropertyField({
         </span>
       )}
 
-      {type === "textarea" ? (
+      {type === 'textarea' ? (
         <textarea
           value={value}
           placeholder={placeholder}
@@ -55,7 +49,7 @@ export default function PropertyField({
         />
       ) : (
         <input
-          type={type === "url" ? "url" : "text"}
+          type={type === 'url' ? 'url' : 'text'}
           value={value}
           placeholder={placeholder}
           onChange={handleChange}

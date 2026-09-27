@@ -1,39 +1,57 @@
 import type {
   CtaProps,
+  FeatureItem,
   FeaturesProps,
   HeroProps,
+  TestimonialItem,
   TestimonialsProps,
-  SectionType,
-} from "./page-schema";
+} from './page-schema';
 
 type StringKeys<T> = {
-  [K in keyof T]-?: T[K] extends
-    | string
-    | undefined
-    ? K
-    : never;
+  [K in keyof T]-?: T[K] extends string | undefined ? K : never;
 }[keyof T];
 
-export type PropertyFieldType =
-  | "text"
-  | "textarea"
-  | "url";
+type ArrayKeys<T> = {
+  [K in keyof T]-?: T[K] extends readonly unknown[] ? K : never;
+}[keyof T];
 
-type PropertyField<TProps> = {
+type ArrayItem<T, K extends keyof T> = T[K] extends readonly (infer U)[]
+  ? U
+  : never;
+
+export type ScalarPropertyType = 'text' | 'textarea' | 'url';
+
+export type CollectionItemField<TItem> = {
+  key: StringKeys<TItem>;
+  label: string;
+  type: Exclude<ScalarPropertyType, never>;
+  placeholder?: string;
+};
+
+export type ScalarPropertyField<TProps> = {
   key: StringKeys<TProps>;
   label: string;
-  type: PropertyFieldType;
+  type: ScalarPropertyType;
   placeholder?: string;
   description?: string;
 };
 
-export type SectionPropertyDefinition<
-  TProps,
-> = {
+export type CollectionPropertyField<TProps> = {
+  key: ArrayKeys<TProps>;
+  label: string;
+  type: 'collection';
+  itemLabel: string;
+  fields: CollectionItemField<ArrayItem<TProps, ArrayKeys<TProps>>>[];
+  createItem: () => ArrayItem<TProps, ArrayKeys<TProps>>;
+};
+
+export type PropertyField<TProps> =
+  ScalarPropertyField<TProps> | CollectionPropertyField<TProps>;
+
+export type SectionPropertyDefinition<TProps> = {
   label: string;
   description?: string;
   fields: PropertyField<TProps>[];
-  
 };
 
 type SectionPropertyDefinitionMap = {
@@ -43,123 +61,173 @@ type SectionPropertyDefinitionMap = {
   cta: SectionPropertyDefinition<CtaProps>;
 };
 
-export const sectionPropertyDefinitions =
-  {
-    hero: {
-      label: "Hero",
-      description:
-        "Introduce your product and primary call to action.",
-      fields: [
-        {
-          key: "title",
-          label: "Title",
-          type: "text",
-          placeholder:
-            "Build something amazing",
-        },
-        {
-          key: "description",
-          label: "Description",
-          type: "textarea",
-          placeholder:
-            "Explain what your product does.",
-        },
-        {
-          key: "primaryCtaText",
-          label: "CTA Text",
-          type: "text",
-          placeholder: "Get Started",
-        },
-        {
-          key: "primaryCtaUrl",
-          label: "CTA URL",
-          type: "url",
-          placeholder: "https://example.com",
-        },
-       
-{
-  key: "subtitle",
-  label: "Subtitle",
-  type: "text",
-  placeholder: "Trusted by modern teams",
-}
-      ],
-    },
+export const sectionPropertyDefinitions = {
+  hero: {
+    label: 'Hero',
+    description: 'Introduce your product and primary call to action.',
+    fields: [
+      {
+        key: 'title',
+        label: 'Title',
+        type: 'text',
+        placeholder: 'Build something amazing',
+      },
+      {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder: 'Explain what your product does.',
+      },
+      {
+        key: 'primaryCtaText',
+        label: 'CTA Text',
+        type: 'text',
+        placeholder: 'Get Started',
+      },
+      {
+        key: 'primaryCtaUrl',
+        label: 'CTA URL',
+        type: 'url',
+        placeholder: 'https://example.com',
+      },
+    ],
+  },
 
-    features: {
-      label: "Features",
-      description:
-        "Highlight the benefits of your product.",
-      fields: [
-        {
-          key: "title",
-          label: "Title",
-          type: "text",
-          placeholder:
-            "Everything you need",
-        },
-        {
-          key: "description",
-          label: "Description",
-          type: "textarea",
-          placeholder:
-            "Describe the feature set.",
-        },
-      ],
-    },
+  features: {
+    label: 'Features',
+    description: 'Highlight the benefits of your product.',
+    fields: [
+      {
+        key: 'title',
+        label: 'Title',
+        type: 'text',
+        placeholder: 'Everything you need',
+      },
+      {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder: 'Describe the feature set.',
+      },
+     {
+        key: 'items',
+        label: 'Features',
+        type: 'collection',
+        itemLabel: 'Feature',
 
-    testimonials: {
-      label: "Testimonials",
-      description:
-        "Show customer feedback and social proof.",
-      fields: [
-        {
-          key: "title",
-          label: "Title",
-          type: "text",
-          placeholder:
-            "What our customers say",
-        },
-      ],
-    },
+        createItem: () => ({
+          id: crypto.randomUUID(),
+          title: 'New Feature',
+          description: 'Describe this feature.',
+          icon: '',
+        }),
 
-    cta: {
-      label: "CTA",
-      description:
-        "Finish the page with a strong call to action.",
-      fields: [
-        {
-          key: "title",
-          label: "Title",
-          type: "text",
-          placeholder:
-            "Ready to get started?",
-        },
-        {
-          key: "description",
-          label: "Description",
-          type: "textarea",
-          placeholder:
-            "Tell visitors what to do next.",
-        },
-        {
-          key: "buttonText",
-          label: "Button Text",
-          type: "text",
-          placeholder: "Get Started",
-        },
-        {
-          key: "buttonUrl",
-          label: "Button URL",
-          type: "url",
-          placeholder: "https://example.com",
-        },
-      ],
+        fields: [
+          {
+            key: 'title',
+            label: 'Title',
+            type: 'text',
+            placeholder: 'Feature title',
+          },
+          {
+            key: 'description',
+            label: 'Description',
+            type: 'textarea',
+            placeholder: 'Feature description',
+          },
+          {
+            key: 'icon',
+            label: 'Icon',
+            type: 'text',
+            placeholder: 'Optional icon',
+          },
+        ],
+},
+    ],
+  },
+
+  testimonials: {
+    label: 'Testimonials',
+    description: 'Show customer feedback and social proof.',
+    fields: [
+      {
+        key: 'title',
+        label: 'Title',
+        type: 'text',
+        placeholder: 'What our customers say',
+      },
+      {
+  key: 'items',
+  label: 'Testimonials',
+  type: 'collection',
+  itemLabel: 'Testimonial',
+
+  createItem: () => ({
+    id: crypto.randomUUID(),
+    name: 'New Customer',
+    role: 'Role',
+    quote: 'Customer feedback goes here.',
+    avatarUrl: '',
+  }),
+
+  fields: [
+    {
+      key: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Customer name',
     },
-  } satisfies SectionPropertyDefinitionMap;
+    {
+      key: 'role',
+      label: 'Role',
+      type: 'text',
+      placeholder: 'Customer role',
+    },
+    {
+      key: 'quote',
+      label: 'Quote',
+      type: 'textarea',
+      placeholder: 'Customer feedback',
+    },
+  ],
+},
+    ],
+  },
+
+  cta: {
+    label: 'CTA',
+    description: 'Finish the page with a strong call to action.',
+    fields: [
+      {
+        key: 'title',
+        label: 'Title',
+        type: 'text',
+        placeholder: 'Ready to get started?',
+      },
+      {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder: 'Tell visitors what to do next.',
+      },
+      {
+        key: 'buttonText',
+        label: 'Button Text',
+        type: 'text',
+        placeholder: 'Get Started',
+      },
+      {
+        key: 'buttonUrl',
+        label: 'Button URL',
+        type: 'url',
+        placeholder: 'https://example.com',
+      },
+    ],
+  },
+} satisfies SectionPropertyDefinitionMap;
 
 export function getSectionPropertyDefinition(
-  type: SectionType,
+  type: keyof SectionPropertyDefinitionMap,
 ) {
   return sectionPropertyDefinitions[type];
 }

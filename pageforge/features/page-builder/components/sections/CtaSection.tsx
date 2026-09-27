@@ -1,12 +1,10 @@
-import type { CtaProps } from "../../domain/page-schema";
+import type { CtaProps } from '../../domain/page-schema';
 
 type CtaSectionProps = {
   props: CtaProps;
 };
 
-export default function CtaSection({
-  props,
-}: CtaSectionProps) {
+export default function CtaSection({ props }: CtaSectionProps) {
   return (
     <section className="bg-gray-950">
       <div className="mx-auto max-w-4xl px-6 py-20 text-center lg:px-8">

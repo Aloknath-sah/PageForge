@@ -1,4 +1,4 @@
-import type { TestimonialsProps } from "../../domain/page-schema";
+import type { TestimonialsProps } from '../../domain/page-schema';
 
 type TestimonialsSectionProps = {
   props: TestimonialsProps;
@@ -27,14 +27,10 @@ export default function TestimonialsSection({
               </blockquote>
 
               <figcaption className="mt-6">
-                <div className="font-semibold text-gray-950">
-                  {item.name}
-                </div>
+                <div className="font-semibold text-gray-950">{item.name}</div>
 
                 {item.role && (
-                  <div className="text-sm text-gray-500">
-                    {item.role}
-                  </div>
+                  <div className="text-sm text-gray-500">{item.role}</div>
                 )}
               </figcaption>
             </figure>

@@ -1,43 +1,25 @@
-import type {
-  ComponentType,
-  ReactNode,
-} from "react";
+import type { ComponentType, ReactNode } from 'react';
 
-import type {
-  PageConfig,
-  PageSection,
-} from "../../domain/page-schema";
+import type { PageConfig, PageSection } from '../../domain/page-schema';
 
-import { sectionRegistry } from "../../registry/section-registry";
+import { sectionRegistry } from '../../registry/section-registry';
 
 type PageRendererProps = {
   config: PageConfig;
 
-  sectionWrapper?: (
-    section: PageSection,
-    content: ReactNode,
-  ) => ReactNode;
+  sectionWrapper?: (section: PageSection, content: ReactNode) => ReactNode;
 };
 
-function renderSection(
-  section: PageSection,
-): ReactNode {
+function renderSection(section: PageSection): ReactNode {
   if (!section.enabled) {
     return null;
   }
 
-  const Component =
-    sectionRegistry[
-      section.type
-    ] as unknown as ComponentType<{
-      props: PageSection["props"];
-    }>;
+  const Component = sectionRegistry[section.type] as unknown as ComponentType<{
+    props: PageSection['props'];
+  }>;
 
-  return (
-    <Component
-      props={section.props}
-    />
-  );
+  return <Component props={section.props} />;
 }
 
 export default function PageRenderer({
@@ -47,18 +29,15 @@ export default function PageRenderer({
   return (
     <main
       style={{
-        backgroundColor:
-          config.theme.backgroundColor,
+        backgroundColor: config.theme.backgroundColor,
 
         color: config.theme.textColor,
 
-        fontFamily:
-          config.theme.fontFamily,
+        fontFamily: config.theme.fontFamily,
       }}
     >
       {config.sections.map((section) => {
-        const content =
-          renderSection(section);
+        const content = renderSection(section);
 
         if (!content) {
           return null;
@@ -66,12 +45,7 @@ export default function PageRenderer({
 
         return (
           <div key={section.id}>
-            {sectionWrapper
-              ? sectionWrapper(
-                  section,
-                  content,
-                )
-              : content}
+            {sectionWrapper ? sectionWrapper(section, content) : content}
           </div>
         );
       })}

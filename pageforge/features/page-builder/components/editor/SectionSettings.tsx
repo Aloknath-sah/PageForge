@@ -12,7 +12,9 @@ export default function SectionSettings() {
   const selectedSection = usePageEditorStore((state) => {
     const id = state.selectedSectionId;
 
-    return state.config.sections.find((section) => section.id === id) ?? null;
+    return (
+      state.config.sections.find((section) => section.id === id) ?? null
+    );
   });
 
   const updateSectionField = usePageEditorStore(
@@ -68,7 +70,10 @@ export default function SectionSettings() {
               type="checkbox"
               checked={selectedSection.enabled}
               onChange={(event) =>
-                setSectionEnabled(selectedSection.id, event.target.checked)
+                setSectionEnabled(
+                  selectedSection.id,
+                  event.target.checked,
+                )
               }
               className="mt-0.5 h-4 w-4 rounded border-gray-300"
               aria-label="Toggle section visibility"
@@ -81,10 +86,6 @@ export default function SectionSettings() {
                 if (field.type === 'collection') {
                   const collectionValue = selectedSection.props[field.key];
 
-                  const items = Array.isArray(collectionValue)
-                    ? collectionValue
-                    : [];
-
                   return (
                     <CollectionField
                       key={String(field.key)}
@@ -93,15 +94,18 @@ export default function SectionSettings() {
                       label={field.label}
                       itemLabel={field.itemLabel}
                       items={
-                        Array.isArray(collectionValue) ? collectionValue : []
+                        Array.isArray(collectionValue)
+                          ? collectionValue
+                          : []
                       }
                       fields={field.fields}
+                      summaryField={field.summaryField}
                       createItem={field.createItem}
                     />
                   );
                 }
 
-              const value = selectedSection.props[field.key];
+                const value = selectedSection.props[field.key];
 
                 return (
                   <PropertyField
@@ -111,7 +115,9 @@ export default function SectionSettings() {
                     value={typeof value === 'string' ? value : ''}
                     placeholder={field.placeholder}
                     description={
-                      'description' in field ? field.description : undefined
+                      'description' in field
+                        ? field.description
+                        : undefined
                     }
                     onChange={(nextValue) =>
                       updateSectionField(

@@ -7,7 +7,7 @@ import type {
   TestimonialsProps,
 } from './page-schema';
 
-type StringKeys<T> = {
+export type StringKeys<T> = {
   [K in keyof T]-?: T[K] extends string | undefined ? K : never;
 }[keyof T];
 
@@ -41,12 +41,18 @@ export type CollectionPropertyField<TProps> = {
   label: string;
   type: 'collection';
   itemLabel: string;
-  fields: CollectionItemField<ArrayItem<TProps, ArrayKeys<TProps>>>[];
+  summaryField?: StringKeys<
+    ArrayItem<TProps, ArrayKeys<TProps>>
+  >;
+  fields: CollectionItemField<
+    ArrayItem<TProps, ArrayKeys<TProps>>
+  >[];
   createItem: () => ArrayItem<TProps, ArrayKeys<TProps>>;
 };
 
 export type PropertyField<TProps> =
-  ScalarPropertyField<TProps> | CollectionPropertyField<TProps>;
+  | ScalarPropertyField<TProps>
+  | CollectionPropertyField<TProps>;
 
 export type SectionPropertyDefinition<TProps> = {
   label: string;
@@ -109,11 +115,12 @@ export const sectionPropertyDefinitions = {
         type: 'textarea',
         placeholder: 'Describe the feature set.',
       },
-     {
+      {
         key: 'items',
         label: 'Features',
         type: 'collection',
         itemLabel: 'Feature',
+        summaryField: 'title',
 
         createItem: () => ({
           id: crypto.randomUUID(),
@@ -142,7 +149,7 @@ export const sectionPropertyDefinitions = {
             placeholder: 'Optional icon',
           },
         ],
-},
+      },
     ],
   },
 
@@ -157,40 +164,41 @@ export const sectionPropertyDefinitions = {
         placeholder: 'What our customers say',
       },
       {
-  key: 'items',
-  label: 'Testimonials',
-  type: 'collection',
-  itemLabel: 'Testimonial',
+        key: 'items',
+        label: 'Testimonials',
+        type: 'collection',
+        itemLabel: 'Testimonial',
+        summaryField: 'name',
 
-  createItem: () => ({
-    id: crypto.randomUUID(),
-    name: 'New Customer',
-    role: 'Role',
-    quote: 'Customer feedback goes here.',
-    avatarUrl: '',
-  }),
+        createItem: () => ({
+          id: crypto.randomUUID(),
+          name: 'New Customer',
+          role: 'Role',
+          quote: 'Customer feedback goes here.',
+          avatarUrl: '',
+        }),
 
-  fields: [
-    {
-      key: 'name',
-      label: 'Name',
-      type: 'text',
-      placeholder: 'Customer name',
-    },
-    {
-      key: 'role',
-      label: 'Role',
-      type: 'text',
-      placeholder: 'Customer role',
-    },
-    {
-      key: 'quote',
-      label: 'Quote',
-      type: 'textarea',
-      placeholder: 'Customer feedback',
-    },
-  ],
-},
+        fields: [
+          {
+            key: 'name',
+            label: 'Name',
+            type: 'text',
+            placeholder: 'Customer name',
+          },
+          {
+            key: 'role',
+            label: 'Role',
+            type: 'text',
+            placeholder: 'Customer role',
+          },
+          {
+            key: 'quote',
+            label: 'Quote',
+            type: 'textarea',
+            placeholder: 'Customer feedback',
+          },
+        ],
+      },
     ],
   },
 

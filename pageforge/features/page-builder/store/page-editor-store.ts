@@ -16,6 +16,8 @@ type PropsFor<T extends SectionType> = Extract<
 export type PageEditorState = {
   config: PageConfig;
 
+  savedConfig: PageConfig;
+
   selectedSectionId: string | null;
 
   isDirty: boolean;
@@ -24,20 +26,30 @@ export type PageEditorState = {
 
   future: PageConfig[];
 
-  selectSection: (sectionId: string | null) => void;
+  selectSection: (
+    sectionId: string | null,
+  ) => void;
 
-  addSection: (type: SectionType) => void;
+  addSection: (
+    type: SectionType,
+  ) => void;
 
-  deleteSection: (sectionId: string) => void;
+  deleteSection: (
+    sectionId: string,
+  ) => void;
 
-  duplicateSection: (sectionId: string) => void;
+  duplicateSection: (
+    sectionId: string,
+  ) => void;
 
   reorderSections: (
     fromIndex: number,
     toIndex: number,
   ) => void;
 
-  updateSectionProps: <T extends SectionType>(
+  updateSectionProps: <
+    T extends SectionType,
+  >(
     sectionId: string,
     type: T,
     patch: Partial<PropsFor<T>>,
@@ -84,6 +96,12 @@ export type PageEditorState = {
 
   endHistoryTransaction: () => void;
 
+  hydrateConfig: (
+    config: PageConfig,
+  ) => void;
+
+  markSaved: () => void;
+
   undo: () => void;
 
   redo: () => void;
@@ -91,8 +109,30 @@ export type PageEditorState = {
 
 const MAX_HISTORY_ENTRIES = 50;
 
-function cloneConfig(config: PageConfig): PageConfig {
+function cloneConfig(
+  config: PageConfig,
+): PageConfig {
   return structuredClone(config);
+}
+
+function configsEqual(
+  first: PageConfig,
+  second: PageConfig,
+): boolean {
+  return (
+    JSON.stringify(first) ===
+    JSON.stringify(second)
+  );
+}
+
+function getDirtyState(
+  config: PageConfig,
+  savedConfig: PageConfig,
+): boolean {
+  return !configsEqual(
+    config,
+    savedConfig,
+  );
 }
 
 function pushHistory(
@@ -122,10 +162,11 @@ function moveItem<T>(
 
   const nextItems = [...items];
 
-  const [movedItem] = nextItems.splice(
-    fromIndex,
-    1,
-  );
+  const [movedItem] =
+    nextItems.splice(
+      fromIndex,
+      1,
+    );
 
   nextItems.splice(
     toIndex,
@@ -144,33 +185,35 @@ function resolveSelectedSectionId(
     selectedSectionId &&
     config.sections.some(
       (section) =>
-        section.id === selectedSectionId,
+        section.id ===
+        selectedSectionId,
     )
   ) {
     return selectedSectionId;
   }
 
-  return config.sections[0]?.id ?? null;
+  return (
+    config.sections[0]?.id ??
+    null
+  );
 }
 
 export const createPageEditorStore = (
   initialConfig: PageConfig,
 ) => {
-  /*
-   * History transaction state intentionally lives outside
-   * the persisted PageEditorState.
-   *
-   * This is editor-only bookkeeping and should never become
-   * part of PageConfig.
-   */
-  let activeHistoryTransaction: PageConfig | null =
-    null;
+  let activeHistoryTransaction:
+    | PageConfig
+    | null = null;
 
-  let historyTransactionChanged = false;
+  let historyTransactionChanged =
+    false;
 
   function clearHistoryTransaction() {
-    activeHistoryTransaction = null;
-    historyTransactionChanged = false;
+    activeHistoryTransaction =
+      null;
+
+    historyTransactionChanged =
+      false;
   }
 
   function commitConfigChange(
@@ -193,7 +236,10 @@ export const createPageEditorStore = (
 
       future: [],
 
-      isDirty: true,
+      isDirty: getDirtyState(
+        nextConfig,
+        state.savedConfig,
+      ),
     };
   }
 
@@ -201,23 +247,21 @@ export const createPageEditorStore = (
     state: PageEditorState,
     nextConfig: PageConfig,
   ) {
-    /*
-     * During a transaction, the config still updates
-     * immediately, but the history snapshot is deferred
-     * until endHistoryTransaction().
-     */
-    if (activeHistoryTransaction) {
-      historyTransactionChanged = true;
+    if (
+      activeHistoryTransaction
+    ) {
+      historyTransactionChanged =
+        true;
 
       return {
         config: nextConfig,
 
-        /*
-         * Any new edit invalidates the redo branch.
-         */
         future: [],
 
-        isDirty: true,
+        isDirty: getDirtyState(
+          nextConfig,
+          state.savedConfig,
+        ),
       };
     }
 
@@ -227,974 +271,1120 @@ export const createPageEditorStore = (
     );
   }
 
-  return createStore<PageEditorState>()((set) => ({
-    config: cloneConfig(initialConfig),
+  return createStore<PageEditorState>()(
+    (set) => ({
+      config: cloneConfig(
+        initialConfig,
+      ),
 
-    selectedSectionId:
-      initialConfig.sections[0]?.id ?? null,
+      savedConfig: cloneConfig(
+        initialConfig,
+      ),
 
-    isDirty: false,
+      selectedSectionId:
+        initialConfig.sections[0]
+          ?.id ?? null,
 
-    past: [],
+      isDirty: false,
 
-    future: [],
+      past: [],
 
-    selectSection: (sectionId) => {
-      set({
-        selectedSectionId: sectionId,
-      });
-    },
+      future: [],
 
-    addSection: (type) => {
-      set((state) => {
-        const newSection =
-          createDefaultSection(type);
-
-        const currentSections =
-          state.config.sections;
-
-        const selectedIndex =
-          state.selectedSectionId
-            ? currentSections.findIndex(
-                (section) =>
-                  section.id ===
-                  state.selectedSectionId,
-              )
-            : -1;
-
-        const insertIndex =
-          selectedIndex >= 0
-            ? selectedIndex + 1
-            : currentSections.length;
-
-        const nextSections = [
-          ...currentSections,
-        ];
-
-        nextSections.splice(
-          insertIndex,
-          0,
-          newSection,
-        );
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections: nextSections,
-        };
-
-        return {
-          ...commitConfigChange(
-            state,
-            nextConfig,
-          ),
-
+      selectSection: (
+        sectionId,
+      ) => {
+        set({
           selectedSectionId:
-            newSection.id,
-        };
-      });
-    },
+            sectionId,
+        });
+      },
 
-    deleteSection: (sectionId) => {
-      set((state) => {
-        const currentSections =
-          state.config.sections;
-
-        const deletedIndex =
-          currentSections.findIndex(
-            (section) =>
-              section.id === sectionId,
-          );
-
-        if (deletedIndex === -1) {
-          return state;
-        }
-
-        const nextSections =
-          currentSections.filter(
-            (section) =>
-              section.id !== sectionId,
-          );
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections: nextSections,
-        };
-
-        let nextSelectedId =
-          state.selectedSectionId;
-
-        if (
-          state.selectedSectionId ===
-          sectionId
-        ) {
-          const replacement =
-            nextSections[
-              Math.min(
-                deletedIndex,
-                nextSections.length - 1,
-              )
-            ];
-
-          nextSelectedId =
-            replacement?.id ?? null;
-        }
-
-        return {
-          ...commitConfigChange(
-            state,
-            nextConfig,
-          ),
-
-          selectedSectionId:
-            nextSelectedId,
-        };
-      });
-    },
-
-    duplicateSection: (sectionId) => {
-      set((state) => {
-        const sourceIndex =
-          state.config.sections.findIndex(
-            (section) =>
-              section.id === sectionId,
-          );
-
-        if (sourceIndex === -1) {
-          return state;
-        }
-
-        const sourceSection =
-          state.config.sections[sourceIndex];
-
-        const duplicatedSection =
-          cloneConfig({
-            ...state.config,
-
-            sections: [
-              sourceSection,
-            ],
-          }).sections[0];
-
-        duplicatedSection.id =
-          crypto.randomUUID();
-
-        if (
-          duplicatedSection.type ===
-          'features'
-        ) {
-          duplicatedSection.props.items =
-            duplicatedSection.props.items.map(
-              (item) => ({
-                ...item,
-                id: crypto.randomUUID(),
-              }),
+      addSection: (type) => {
+        set((state) => {
+          const newSection =
+            createDefaultSection(
+              type,
             );
-        }
 
-        if (
-          duplicatedSection.type ===
-          'testimonials'
-        ) {
-          duplicatedSection.props.items =
-            duplicatedSection.props.items.map(
-              (item) => ({
-                ...item,
-                id: crypto.randomUUID(),
-              }),
-            );
-        }
+          const currentSections =
+            state.config.sections;
 
-        const nextSections = [
-          ...state.config.sections,
-        ];
+          const selectedIndex =
+            state.selectedSectionId
+              ? currentSections.findIndex(
+                  (section) =>
+                    section.id ===
+                    state.selectedSectionId,
+                )
+              : -1;
 
-        nextSections.splice(
-          sourceIndex + 1,
-          0,
-          duplicatedSection,
-        );
+          const insertIndex =
+            selectedIndex >= 0
+              ? selectedIndex + 1
+              : currentSections.length;
 
-        const nextConfig: PageConfig = {
-          ...state.config,
+          const nextSections = [
+            ...currentSections,
+          ];
 
-          sections: nextSections,
-        };
-
-        return {
-          ...commitConfigChange(
-            state,
-            nextConfig,
-          ),
-
-          selectedSectionId:
-            duplicatedSection.id,
-        };
-      });
-    },
-
-    reorderSections: (
-      fromIndex,
-      toIndex,
-    ) => {
-      set((state) => {
-        const nextSections = moveItem(
-          state.config.sections,
-          fromIndex,
-          toIndex,
-        );
-
-        if (
-          nextSections ===
-          state.config.sections
-        ) {
-          return state;
-        }
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections: nextSections,
-        };
-
-        return commitConfigChange(
-          state,
-          nextConfig,
-        );
-      });
-    },
-
-    updateSectionProps: (
-      sectionId,
-      type,
-      patch,
-    ) => {
-      set((state) => {
-        const targetSection =
-          state.config.sections.find(
-            (section) =>
-              section.id === sectionId &&
-              section.type === type,
+          nextSections.splice(
+            insertIndex,
+            0,
+            newSection,
           );
 
-        if (!targetSection) {
-          return state;
-        }
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
 
-        const hasChanges =
-          Object.entries(patch).some(
-            ([key, value]) =>
-              !Object.is(
-                (
-                  targetSection.props as Record<
-                    string,
-                    unknown
-                  >
-                )[key],
-                value,
-              ),
-          );
+              sections:
+                nextSections,
+            };
 
-        if (!hasChanges) {
-          return state;
-        }
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections:
-            state.config.sections.map(
-              (section) => {
-                if (
-                  section.id !==
-                    sectionId ||
-                  section.type !== type
-                ) {
-                  return section;
-                }
-
-                return {
-                  ...section,
-
-                  props: {
-                    ...section.props,
-                    ...patch,
-                  },
-                } as PageSection;
-              },
+          return {
+            ...commitConfigChange(
+              state,
+              nextConfig,
             ),
-        };
 
-        return applyConfigChange(
-          state,
-          nextConfig,
-        );
-      });
-    },
+            selectedSectionId:
+              newSection.id,
+          };
+        });
+      },
 
-    setSectionEnabled: (
-      sectionId,
-      enabled,
-    ) => {
-      set((state) => {
-        const targetSection =
-          state.config.sections.find(
-            (section) =>
-              section.id === sectionId,
-          );
+      deleteSection: (
+        sectionId,
+      ) => {
+        set((state) => {
+          const currentSections =
+            state.config.sections;
 
-        if (!targetSection) {
-          return state;
-        }
-
-        if (
-          targetSection.enabled ===
-          enabled
-        ) {
-          return state;
-        }
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections:
-            state.config.sections.map(
-              (section) =>
-                section.id === sectionId
-                  ? {
-                      ...section,
-                      enabled,
-                    }
-                  : section,
-            ),
-        };
-
-        return commitConfigChange(
-          state,
-          nextConfig,
-        );
-      });
-    },
-
-    updateSectionField: (
-      sectionId,
-      field,
-      value,
-    ) => {
-      set((state) => {
-        const targetSection =
-          state.config.sections.find(
-            (section) =>
-              section.id === sectionId,
-          );
-
-        if (!targetSection) {
-          return state;
-        }
-
-        if (
-          !Object.prototype.hasOwnProperty.call(
-            targetSection.props,
-            field,
-          )
-        ) {
-          return state;
-        }
-
-        const currentValue = (
-          targetSection.props as Record<
-            string,
-            unknown
-          >
-        )[field];
-
-        if (
-          Object.is(
-            currentValue,
-            value,
-          )
-        ) {
-          return state;
-        }
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections:
-            state.config.sections.map(
+          const deletedIndex =
+            currentSections.findIndex(
               (section) =>
                 section.id ===
-                sectionId
-                  ? {
+                sectionId,
+            );
+
+          if (
+            deletedIndex === -1
+          ) {
+            return state;
+          }
+
+          const nextSections =
+            currentSections.filter(
+              (section) =>
+                section.id !==
+                sectionId,
+            );
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                nextSections,
+            };
+
+          let nextSelectedId =
+            state.selectedSectionId;
+
+          if (
+            state.selectedSectionId ===
+            sectionId
+          ) {
+            const replacement =
+              nextSections[
+                Math.min(
+                  deletedIndex,
+                  nextSections.length -
+                    1,
+                )
+              ];
+
+            nextSelectedId =
+              replacement?.id ??
+              null;
+          }
+
+          return {
+            ...commitConfigChange(
+              state,
+              nextConfig,
+            ),
+
+            selectedSectionId:
+              nextSelectedId,
+          };
+        });
+      },
+
+      duplicateSection: (
+        sectionId,
+      ) => {
+        set((state) => {
+          const sourceIndex =
+            state.config.sections.findIndex(
+              (section) =>
+                section.id ===
+                sectionId,
+            );
+
+          if (
+            sourceIndex === -1
+          ) {
+            return state;
+          }
+
+          const sourceSection =
+            state.config.sections[
+              sourceIndex
+            ];
+
+          const duplicatedSection =
+            cloneConfig({
+              ...state.config,
+
+              sections: [
+                sourceSection,
+              ],
+            }).sections[0];
+
+          duplicatedSection.id =
+            crypto.randomUUID();
+
+          if (
+            duplicatedSection.type ===
+            'features'
+          ) {
+            duplicatedSection.props.items =
+              duplicatedSection.props.items.map(
+                (item) => ({
+                  ...item,
+                  id: crypto.randomUUID(),
+                }),
+              );
+          }
+
+          if (
+            duplicatedSection.type ===
+            'testimonials'
+          ) {
+            duplicatedSection.props.items =
+              duplicatedSection.props.items.map(
+                (item) => ({
+                  ...item,
+                  id: crypto.randomUUID(),
+                }),
+              );
+          }
+
+          const nextSections = [
+            ...state.config.sections,
+          ];
+
+          nextSections.splice(
+            sourceIndex + 1,
+            0,
+            duplicatedSection,
+          );
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                nextSections,
+            };
+
+          return {
+            ...commitConfigChange(
+              state,
+              nextConfig,
+            ),
+
+            selectedSectionId:
+              duplicatedSection.id,
+          };
+        });
+      },
+
+      reorderSections: (
+        fromIndex,
+        toIndex,
+      ) => {
+        set((state) => {
+          const nextSections =
+            moveItem(
+              state.config.sections,
+              fromIndex,
+              toIndex,
+            );
+
+          if (
+            nextSections ===
+            state.config.sections
+          ) {
+            return state;
+          }
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                nextSections,
+            };
+
+          return commitConfigChange(
+            state,
+            nextConfig,
+          );
+        });
+      },
+
+      updateSectionProps: (
+        sectionId,
+        type,
+        patch,
+      ) => {
+        set((state) => {
+          const targetSection =
+            state.config.sections.find(
+              (section) =>
+                section.id ===
+                  sectionId &&
+                section.type ===
+                  type,
+            );
+
+          if (
+            !targetSection
+          ) {
+            return state;
+          }
+
+          const hasChanges =
+            Object.entries(
+              patch,
+            ).some(
+              ([key, value]) =>
+                !Object.is(
+                  (
+                    targetSection.props as Record<
+                      string,
+                      unknown
+                    >
+                  )[key],
+                  value,
+                ),
+            );
+
+          if (!hasChanges) {
+            return state;
+          }
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                state.config.sections.map(
+                  (section) => {
+                    if (
+                      section.id !==
+                        sectionId ||
+                      section.type !==
+                        type
+                    ) {
+                      return section;
+                    }
+
+                    return {
+                      ...section,
+
+                      props: {
+                        ...section.props,
+                        ...patch,
+                      },
+                    } as PageSection;
+                  },
+                ),
+            };
+
+          return applyConfigChange(
+            state,
+            nextConfig,
+          );
+        });
+      },
+
+      setSectionEnabled: (
+        sectionId,
+        enabled,
+      ) => {
+        set((state) => {
+          const targetSection =
+            state.config.sections.find(
+              (section) =>
+                section.id ===
+                sectionId,
+            );
+
+          if (
+            !targetSection
+          ) {
+            return state;
+          }
+
+          if (
+            targetSection.enabled ===
+            enabled
+          ) {
+            return state;
+          }
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                state.config.sections.map(
+                  (section) =>
+                    section.id ===
+                    sectionId
+                      ? {
+                          ...section,
+                          enabled,
+                        }
+                      : section,
+                ),
+            };
+
+          return commitConfigChange(
+            state,
+            nextConfig,
+          );
+        });
+      },
+
+      updateSectionField: (
+        sectionId,
+        field,
+        value,
+      ) => {
+        set((state) => {
+          const targetSection =
+            state.config.sections.find(
+              (section) =>
+                section.id ===
+                sectionId,
+            );
+
+          if (
+            !targetSection
+          ) {
+            return state;
+          }
+
+          if (
+            !Object.prototype.hasOwnProperty.call(
+              targetSection.props,
+              field,
+            )
+          ) {
+            return state;
+          }
+
+          const currentValue =
+            (
+              targetSection.props as Record<
+                string,
+                unknown
+              >
+            )[field];
+
+          if (
+            Object.is(
+              currentValue,
+              value,
+            )
+          ) {
+            return state;
+          }
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                state.config.sections.map(
+                  (section) =>
+                    section.id ===
+                    sectionId
+                      ? {
+                          ...section,
+
+                          props: {
+                            ...section.props,
+
+                            [field]:
+                              value,
+                          },
+                        }
+                      : section,
+                ),
+            };
+
+          return applyConfigChange(
+            state,
+            nextConfig,
+          );
+        });
+      },
+
+      addCollectionItem: (
+        sectionId,
+        collectionKey,
+        item,
+      ) => {
+        set((state) => {
+          const targetSection =
+            state.config.sections.find(
+              (section) =>
+                section.id ===
+                sectionId,
+            );
+
+          if (
+            !targetSection
+          ) {
+            return state;
+          }
+
+          const currentValue =
+            targetSection.props[
+              collectionKey as keyof typeof targetSection.props
+            ];
+
+          if (
+            !Array.isArray(
+              currentValue,
+            )
+          ) {
+            return state;
+          }
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                state.config.sections.map(
+                  (section) => {
+                    if (
+                      section.id !==
+                      sectionId
+                    ) {
+                      return section;
+                    }
+
+                    return {
                       ...section,
 
                       props: {
                         ...section.props,
 
-                        [field]: value,
+                        [collectionKey]:
+                          [
+                            ...currentValue,
+                            item,
+                          ],
                       },
-                    }
-                  : section,
-            ),
-        };
+                    } as PageSection;
+                  },
+                ),
+            };
 
-        return applyConfigChange(
-          state,
-          nextConfig,
-        );
-      });
-    },
-
-    addCollectionItem: (
-      sectionId,
-      collectionKey,
-      item,
-    ) => {
-      set((state) => {
-        const targetSection =
-          state.config.sections.find(
-            (section) =>
-              section.id === sectionId,
+          return commitConfigChange(
+            state,
+            nextConfig,
           );
+        });
+      },
 
-        if (!targetSection) {
-          return state;
-        }
+      updateCollectionItem: (
+        sectionId,
+        collectionKey,
+        itemId,
+        patch,
+      ) => {
+        set((state) => {
+          const targetSection =
+            state.config.sections.find(
+              (section) =>
+                section.id ===
+                sectionId,
+            );
 
-        const currentValue =
-          targetSection.props[
-            collectionKey as keyof typeof targetSection.props
-          ];
+          if (
+            !targetSection
+          ) {
+            return state;
+          }
 
-        if (
-          !Array.isArray(
-            currentValue,
-          )
-        ) {
-          return state;
-        }
+          const currentValue =
+            targetSection.props[
+              collectionKey as keyof typeof targetSection.props
+            ];
 
-        const nextConfig: PageConfig = {
-          ...state.config,
+          if (
+            !Array.isArray(
+              currentValue,
+            )
+          ) {
+            return state;
+          }
 
-          sections:
-            state.config.sections.map(
-              (section) => {
+          let changed = false;
+
+          const nextItems =
+            currentValue.map(
+              (item) => {
                 if (
-                  section.id !==
-                  sectionId
+                  !item ||
+                  typeof item !==
+                    'object' ||
+                  !('id' in item) ||
+                  item.id !== itemId
                 ) {
-                  return section;
+                  return item;
                 }
 
+                const hasChanges =
+                  Object.entries(
+                    patch,
+                  ).some(
+                    ([key, value]) =>
+                      !Object.is(
+                        (
+                          item as Record<
+                            string,
+                            unknown
+                          >
+                        )[key],
+                        value,
+                      ),
+                  );
+
+                if (
+                  !hasChanges
+                ) {
+                  return item;
+                }
+
+                changed = true;
+
                 return {
-                  ...section,
-
-                  props: {
-                    ...section.props,
-
-                    [collectionKey]: [
-                      ...currentValue,
-                      item,
-                    ],
-                  },
-                } as PageSection;
+                  ...item,
+                  ...patch,
+                };
               },
-            ),
-        };
+            );
 
-        return commitConfigChange(
-          state,
-          nextConfig,
-        );
-      });
-    },
+          if (!changed) {
+            return state;
+          }
 
-    updateCollectionItem: (
-      sectionId,
-      collectionKey,
-      itemId,
-      patch,
-    ) => {
-      set((state) => {
-        const targetSection =
-          state.config.sections.find(
-            (section) =>
-              section.id === sectionId,
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                state.config.sections.map(
+                  (section) => {
+                    if (
+                      section.id !==
+                      sectionId
+                    ) {
+                      return section;
+                    }
+
+                    return {
+                      ...section,
+
+                      props: {
+                        ...section.props,
+
+                        [collectionKey]:
+                          nextItems,
+                      },
+                    } as PageSection;
+                  },
+                ),
+            };
+
+          return applyConfigChange(
+            state,
+            nextConfig,
           );
+        });
+      },
 
-        if (!targetSection) {
+      removeCollectionItem: (
+        sectionId,
+        collectionKey,
+        itemId,
+      ) => {
+        set((state) => {
+          const targetSection =
+            state.config.sections.find(
+              (section) =>
+                section.id ===
+                sectionId,
+            );
+
+          if (
+            !targetSection
+          ) {
+            return state;
+          }
+
+          const currentValue =
+            targetSection.props[
+              collectionKey as keyof typeof targetSection.props
+            ];
+
+          if (
+            !Array.isArray(
+              currentValue,
+            )
+          ) {
+            return state;
+          }
+
+          const nextItems =
+            currentValue.filter(
+              (item) =>
+                !(
+                  item &&
+                  typeof item ===
+                    'object' &&
+                  'id' in item &&
+                  item.id === itemId
+                ),
+            );
+
+          if (
+            nextItems.length ===
+            currentValue.length
+          ) {
+            return state;
+          }
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                state.config.sections.map(
+                  (section) => {
+                    if (
+                      section.id !==
+                      sectionId
+                    ) {
+                      return section;
+                    }
+
+                    return {
+                      ...section,
+
+                      props: {
+                        ...section.props,
+
+                        [collectionKey]:
+                          nextItems,
+                      },
+                    } as PageSection;
+                  },
+                ),
+            };
+
+          return commitConfigChange(
+            state,
+            nextConfig,
+          );
+        });
+      },
+
+      reorderCollectionItems: (
+        sectionId,
+        collectionKey,
+        fromIndex,
+        toIndex,
+      ) => {
+        set((state) => {
+          if (
+            fromIndex ===
+              toIndex ||
+            fromIndex < 0 ||
+            toIndex < 0
+          ) {
+            return state;
+          }
+
+          const targetSection =
+            state.config.sections.find(
+              (section) =>
+                section.id ===
+                sectionId,
+            );
+
+          if (
+            !targetSection
+          ) {
+            return state;
+          }
+
+          const currentValue =
+            targetSection.props[
+              collectionKey as keyof typeof targetSection.props
+            ];
+
+          if (
+            !Array.isArray(
+              currentValue,
+            ) ||
+            fromIndex >=
+              currentValue.length ||
+            toIndex >=
+              currentValue.length
+          ) {
+            return state;
+          }
+
+          const nextItems =
+            moveItem(
+              currentValue,
+              fromIndex,
+              toIndex,
+            );
+
+          if (
+            nextItems ===
+            currentValue
+          ) {
+            return state;
+          }
+
+          const nextConfig: PageConfig =
+            {
+              ...state.config,
+
+              sections:
+                state.config.sections.map(
+                  (section) => {
+                    if (
+                      section.id !==
+                      sectionId
+                    ) {
+                      return section;
+                    }
+
+                    return {
+                      ...section,
+
+                      props: {
+                        ...section.props,
+
+                        [collectionKey]:
+                          nextItems,
+                      },
+                    } as PageSection;
+                  },
+                ),
+            };
+
+          return commitConfigChange(
+            state,
+            nextConfig,
+          );
+        });
+      },
+
+      beginHistoryTransaction: () => {
+        set((state) => {
+          if (
+            activeHistoryTransaction
+          ) {
+            return state;
+          }
+
+          activeHistoryTransaction =
+            cloneConfig(
+              state.config,
+            );
+
+          historyTransactionChanged =
+            false;
+
           return state;
-        }
+        });
+      },
 
-        const currentValue =
-          targetSection.props[
-            collectionKey as keyof typeof targetSection.props
-          ];
+      endHistoryTransaction: () => {
+        set((state) => {
+          if (
+            !activeHistoryTransaction
+          ) {
+            return state;
+          }
 
-        if (
-          !Array.isArray(
-            currentValue,
-          )
-        ) {
-          return state;
-        }
-
-        let changed = false;
-
-        const nextItems =
-          currentValue.map((item) => {
-            if (
-              !item ||
-              typeof item !==
-                'object' ||
-              !('id' in item) ||
-              item.id !== itemId
-            ) {
-              return item;
-            }
-
-            const hasChanges =
-              Object.entries(
-                patch,
-              ).some(
-                ([key, value]) =>
-                  !Object.is(
-                    (
-                      item as Record<
-                        string,
-                        unknown
-                      >
-                    )[key],
-                    value,
-                  ),
-              );
-
-            if (!hasChanges) {
-              return item;
-            }
-
-            changed = true;
+          if (
+            !historyTransactionChanged ||
+            configsEqual(
+              state.config,
+              activeHistoryTransaction,
+            )
+          ) {
+            clearHistoryTransaction();
 
             return {
-              ...item,
-              ...patch,
+              isDirty:
+                getDirtyState(
+                  state.config,
+                  state.savedConfig,
+                ),
             };
-          });
+          }
 
-        if (!changed) {
-          return state;
-        }
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections:
-            state.config.sections.map(
-              (section) => {
-                if (
-                  section.id !==
-                  sectionId
-                ) {
-                  return section;
-                }
-
-                return {
-                  ...section,
-
-                  props: {
-                    ...section.props,
-
-                    [collectionKey]:
-                      nextItems,
-                  },
-                } as PageSection;
-              },
-            ),
-        };
-
-        return applyConfigChange(
-          state,
-          nextConfig,
-        );
-      });
-    },
-
-    removeCollectionItem: (
-      sectionId,
-      collectionKey,
-      itemId,
-    ) => {
-      set((state) => {
-        const targetSection =
-          state.config.sections.find(
-            (section) =>
-              section.id === sectionId,
-          );
-
-        if (!targetSection) {
-          return state;
-        }
-
-        const currentValue =
-          targetSection.props[
-            collectionKey as keyof typeof targetSection.props
-          ];
-
-        if (
-          !Array.isArray(
-            currentValue,
-          )
-        ) {
-          return state;
-        }
-
-        const nextItems =
-          currentValue.filter(
-            (item) =>
-              !(
-                item &&
-                typeof item ===
-                  'object' &&
-                'id' in item &&
-                item.id === itemId
-              ),
-          );
-
-        if (
-          nextItems.length ===
-          currentValue.length
-        ) {
-          return state;
-        }
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections:
-            state.config.sections.map(
-              (section) => {
-                if (
-                  section.id !==
-                  sectionId
-                ) {
-                  return section;
-                }
-
-                return {
-                  ...section,
-
-                  props: {
-                    ...section.props,
-
-                    [collectionKey]:
-                      nextItems,
-                  },
-                } as PageSection;
-              },
-            ),
-        };
-
-        return commitConfigChange(
-          state,
-          nextConfig,
-        );
-      });
-    },
-
-    reorderCollectionItems: (
-      sectionId,
-      collectionKey,
-      fromIndex,
-      toIndex,
-    ) => {
-      set((state) => {
-        if (
-          fromIndex === toIndex ||
-          fromIndex < 0 ||
-          toIndex < 0
-        ) {
-          return state;
-        }
-
-        const targetSection =
-          state.config.sections.find(
-            (section) =>
-              section.id === sectionId,
-          );
-
-        if (!targetSection) {
-          return state;
-        }
-
-        const currentValue =
-          targetSection.props[
-            collectionKey as keyof typeof targetSection.props
-          ];
-
-        if (
-          !Array.isArray(
-            currentValue,
-          ) ||
-          fromIndex >=
-            currentValue.length ||
-          toIndex >=
-            currentValue.length
-        ) {
-          return state;
-        }
-
-        const nextItems = moveItem(
-          currentValue,
-          fromIndex,
-          toIndex,
-        );
-
-        if (
-          nextItems ===
-          currentValue
-        ) {
-          return state;
-        }
-
-        const nextConfig: PageConfig = {
-          ...state.config,
-
-          sections:
-            state.config.sections.map(
-              (section) => {
-                if (
-                  section.id !==
-                  sectionId
-                ) {
-                  return section;
-                }
-
-                return {
-                  ...section,
-
-                  props: {
-                    ...section.props,
-
-                    [collectionKey]:
-                      nextItems,
-                  },
-                } as PageSection;
-              },
-            ),
-        };
-
-        return commitConfigChange(
-          state,
-          nextConfig,
-        );
-      });
-    },
-
-    beginHistoryTransaction: () => {
-      set((state) => {
-        /*
-         * Avoid nested transactions. Focus/blur should
-         * normally produce a clean pair, but this makes
-         * the API defensive.
-         */
-        if (
-          activeHistoryTransaction
-        ) {
-          return state;
-        }
-
-        activeHistoryTransaction =
-          cloneConfig(
-            state.config,
-          );
-
-        historyTransactionChanged =
-          false;
-
-        return state;
-      });
-    },
-
-    endHistoryTransaction: () => {
-      set((state) => {
-        if (
-          !activeHistoryTransaction
-        ) {
-          return state;
-        }
-
-        if (
-          !historyTransactionChanged
-        ) {
-          clearHistoryTransaction();
-          return state;
-        }
-
-        const historyBase =
-          activeHistoryTransaction;
-
-        clearHistoryTransaction();
-
-        return {
-          past: pushHistory(
-            state.past,
-            historyBase,
-          ),
-
-          future: [],
-
-          isDirty: true,
-        };
-      });
-    },
-
-    undo: () => {
-      set((state) => {
-        /*
-         * If the user presses Ctrl/Cmd + Z while actively
-         * editing a field, undo the entire current editing
-         * transaction first.
-         */
-        if (
-          activeHistoryTransaction &&
-          historyTransactionChanged
-        ) {
-          const transactionBase =
+          const historyBase =
             activeHistoryTransaction;
 
-          const currentConfig =
-            state.config;
+          clearHistoryTransaction();
+
+          return {
+            past: pushHistory(
+              state.past,
+              historyBase,
+            ),
+
+            future: [],
+
+            isDirty:
+              getDirtyState(
+                state.config,
+                state.savedConfig,
+              ),
+          };
+        });
+      },
+
+      hydrateConfig: (
+        config,
+      ) => {
+        set((state) => {
+          const nextConfig =
+            cloneConfig(config);
 
           clearHistoryTransaction();
 
           return {
             config:
-              transactionBase,
+              nextConfig,
 
-            past: state.past,
-
-            future: [
-              ...state.future,
+            savedConfig:
               cloneConfig(
-                currentConfig,
+                nextConfig,
               ),
-            ].slice(
-              -MAX_HISTORY_ENTRIES,
-            ),
+
+            past: [],
+
+            future: [],
+
+            isDirty: false,
 
             selectedSectionId:
               resolveSelectedSectionId(
                 state.selectedSectionId,
+                nextConfig,
+              ),
+          };
+        });
+      },
+
+      markSaved: () => {
+        set((state) => {
+          const savedConfig =
+            cloneConfig(
+              state.config,
+            );
+
+          return {
+            savedConfig,
+
+            isDirty: false,
+          };
+        });
+      },
+
+      undo: () => {
+        set((state) => {
+          if (
+            activeHistoryTransaction &&
+            historyTransactionChanged
+          ) {
+            const transactionBase =
+              activeHistoryTransaction;
+
+            const currentConfig =
+              state.config;
+
+            clearHistoryTransaction();
+
+            return {
+              config:
                 transactionBase,
+
+              past: state.past,
+
+              future: [
+                ...state.future,
+                cloneConfig(
+                  currentConfig,
+                ),
+              ].slice(
+                -MAX_HISTORY_ENTRIES,
+              ),
+
+              selectedSectionId:
+                resolveSelectedSectionId(
+                  state.selectedSectionId,
+                  transactionBase,
+                ),
+
+              isDirty:
+                getDirtyState(
+                  transactionBase,
+                  state.savedConfig,
+                ),
+            };
+          }
+
+          clearHistoryTransaction();
+
+          if (
+            state.past.length ===
+            0
+          ) {
+            return state;
+          }
+
+          const previousConfig =
+            state.past[
+              state.past.length -
+                1
+            ];
+
+          const nextPast =
+            state.past.slice(
+              0,
+              -1,
+            );
+
+          const nextFuture = [
+            ...state.future,
+            cloneConfig(
+              state.config,
+            ),
+          ].slice(
+            -MAX_HISTORY_ENTRIES,
+          );
+
+          return {
+            config:
+              previousConfig,
+
+            past:
+              nextPast,
+
+            future:
+              nextFuture,
+
+            selectedSectionId:
+              resolveSelectedSectionId(
+                state.selectedSectionId,
+                previousConfig,
               ),
 
             isDirty:
-              state.past.length > 0,
+              getDirtyState(
+                previousConfig,
+                state.savedConfig,
+              ),
           };
-        }
+        });
+      },
 
-        clearHistoryTransaction();
+      redo: () => {
+        set((state) => {
+          clearHistoryTransaction();
 
-        if (
-          state.past.length === 0
-        ) {
-          return state;
-        }
+          if (
+            state.future.length ===
+            0
+          ) {
+            return state;
+          }
 
-        const previousConfig =
-          state.past[
-            state.past.length - 1
-          ];
+          const nextConfig =
+            state.future[
+              state.future.length -
+                1
+            ];
 
-        const nextPast =
-          state.past.slice(0, -1);
+          const nextFuture =
+            state.future.slice(
+              0,
+              -1,
+            );
 
-        const nextFuture = [
-          ...state.future,
-          cloneConfig(
-            state.config,
-          ),
-        ].slice(
-          -MAX_HISTORY_ENTRIES,
-        );
-
-        return {
-          config:
-            previousConfig,
-
-          past:
-            nextPast,
-
-          future:
-            nextFuture,
-
-          selectedSectionId:
-            resolveSelectedSectionId(
-              state.selectedSectionId,
-              previousConfig,
+          const nextPast = [
+            ...state.past,
+            cloneConfig(
+              state.config,
             ),
+          ].slice(
+            -MAX_HISTORY_ENTRIES,
+          );
 
-          isDirty:
-            nextPast.length > 0,
-        };
-      });
-    },
-
-    redo: () => {
-      set((state) => {
-        /*
-         * A new edit invalidates redo, so normally there
-         * will be no future state while a transaction is
-         * active. Clearing the transaction here keeps the
-         * behavior defensive and predictable.
-         */
-        clearHistoryTransaction();
-
-        if (
-          state.future.length === 0
-        ) {
-          return state;
-        }
-
-        const nextConfig =
-          state.future[
-            state.future.length - 1
-          ];
-
-        const nextFuture =
-          state.future.slice(0, -1);
-
-        const nextPast = [
-          ...state.past,
-          cloneConfig(
-            state.config,
-          ),
-        ].slice(
-          -MAX_HISTORY_ENTRIES,
-        );
-
-        return {
-          config:
-            nextConfig,
-
-          past:
-            nextPast,
-
-          future:
-            nextFuture,
-
-          selectedSectionId:
-            resolveSelectedSectionId(
-              state.selectedSectionId,
+          return {
+            config:
               nextConfig,
-            ),
 
-          isDirty:
-            nextPast.length > 0,
-        };
-      });
-    },
-  }));
+            past:
+              nextPast,
+
+            future:
+              nextFuture,
+
+            selectedSectionId:
+              resolveSelectedSectionId(
+                state.selectedSectionId,
+                nextConfig,
+              ),
+
+            isDirty:
+              getDirtyState(
+                nextConfig,
+                state.savedConfig,
+              ),
+          };
+        });
+      },
+    }),
+  );
 };

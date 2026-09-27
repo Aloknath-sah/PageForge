@@ -8,6 +8,8 @@ import { usePageEditorStore } from '../../providers/page-editor-provider';
 
 import { useEditorHistoryShortcuts } from '../../hooks/use-editor-history-shortcuts';
 
+import { usePageEditorPersistence } from '../../hooks/use-page-editor-persistence';
+
 type PageBuilderProps = {
   pageId: string;
 };
@@ -20,11 +22,13 @@ export default function PageBuilder({
   );
 
   const canUndo = usePageEditorStore(
-    (state) => state.past.length > 0,
+    (state) =>
+      state.past.length > 0,
   );
 
   const canRedo = usePageEditorStore(
-    (state) => state.future.length > 0,
+    (state) =>
+      state.future.length > 0,
   );
 
   const undo = usePageEditorStore(
@@ -33,6 +37,14 @@ export default function PageBuilder({
 
   const redo = usePageEditorStore(
     (state) => state.redo,
+  );
+
+  const {
+    isHydrated,
+    save,
+    saveError,
+  } = usePageEditorPersistence(
+    pageId,
   );
 
   useEditorHistoryShortcuts({
@@ -58,7 +70,10 @@ export default function PageBuilder({
             <button
               type="button"
               onClick={undo}
-              disabled={!canUndo}
+              disabled={
+                !canUndo ||
+                !isHydrated
+              }
               title="Undo (Ctrl/Cmd + Z)"
               aria-label="Undo last change"
               className="rounded-md px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
@@ -69,7 +84,10 @@ export default function PageBuilder({
             <button
               type="button"
               onClick={redo}
-              disabled={!canRedo}
+              disabled={
+                !canRedo ||
+                !isHydrated
+              }
               title="Redo (Ctrl/Cmd + Shift + Z)"
               aria-label="Redo last undone change"
               className="rounded-md px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
@@ -77,6 +95,18 @@ export default function PageBuilder({
               ↷
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={save}
+            disabled={
+              !isDirty ||
+              !isHydrated
+            }
+            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+          >
+            Save
+          </button>
 
           <span
             className={[
@@ -86,12 +116,23 @@ export default function PageBuilder({
                 : 'bg-green-50 text-green-700',
             ].join(' ')}
           >
-            {isDirty
-              ? 'Draft changes'
-              : 'All changes saved'}
+            {!isHydrated
+              ? 'Loading saved page'
+              : isDirty
+                ? 'Draft changes'
+                : 'All changes saved'}
           </span>
         </div>
       </header>
+
+      {saveError && (
+        <div
+          className="border-b border-red-200 bg-red-50 px-5 py-2 text-xs text-red-700"
+          role="alert"
+        >
+          {saveError}
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1">
         <SectionList />

@@ -23,7 +23,7 @@ export default function TestimonialsSection({
               className="rounded-2xl border border-gray-200 p-8"
             >
               <blockquote className="text-lg leading-8 text-gray-700">
-                "{item.quote}"
+                {`"${item.quote}"`}
               </blockquote>
 
               <figcaption className="mt-6">

@@ -1,3 +1,8 @@
+import { PageEditorProvider } from "@/features/page-builder/providers/page-editor-provider";
+import PageBuilder from "@/features/page-builder/components/editor/PageBuilder";
+
+import { samplePage } from "@/features/page-builder/domain/sample-page";
+
 type EditorPageProps = {
   params: Promise<{
     pageId: string;
@@ -10,14 +15,10 @@ export default async function EditorPage({
   const { pageId } = await params;
 
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-semibold">
-        Editor
-      </h1>
-
-      <p className="mt-2 text-gray-600">
-        Editing page: {pageId}
-      </p>
-    </main>
+    <PageEditorProvider
+      initialConfig={samplePage}
+    >
+      <PageBuilder pageId={pageId} />
+    </PageEditorProvider>
   );
 }

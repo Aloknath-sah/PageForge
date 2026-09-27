@@ -1,9 +1,7 @@
 import type {
   CtaProps,
-  FeatureItem,
   FeaturesProps,
   HeroProps,
-  TestimonialItem,
   TestimonialsProps,
 } from './page-schema';
 
@@ -26,6 +24,7 @@ export type CollectionItemField<TItem> = {
   label: string;
   type: Exclude<ScalarPropertyType, never>;
   placeholder?: string;
+  required?: boolean;
 };
 
 export type ScalarPropertyField<TProps> = {
@@ -44,6 +43,8 @@ export type CollectionPropertyField<TProps> = {
   summaryField?: StringKeys<
     ArrayItem<TProps, ArrayKeys<TProps>>
   >;
+  minItems?: number;
+  maxItems?: number;
   fields: CollectionItemField<
     ArrayItem<TProps, ArrayKeys<TProps>>
   >[];
@@ -121,6 +122,8 @@ export const sectionPropertyDefinitions = {
         type: 'collection',
         itemLabel: 'Feature',
         summaryField: 'title',
+        minItems: 1,
+        maxItems: 6,
 
         createItem: () => ({
           id: crypto.randomUUID(),
@@ -135,12 +138,14 @@ export const sectionPropertyDefinitions = {
             label: 'Title',
             type: 'text',
             placeholder: 'Feature title',
+            required: true,
           },
           {
             key: 'description',
             label: 'Description',
             type: 'textarea',
             placeholder: 'Feature description',
+            required: true,
           },
           {
             key: 'icon',
@@ -169,6 +174,8 @@ export const sectionPropertyDefinitions = {
         type: 'collection',
         itemLabel: 'Testimonial',
         summaryField: 'name',
+        minItems: 1,
+        maxItems: 6,
 
         createItem: () => ({
           id: crypto.randomUUID(),
@@ -184,6 +191,7 @@ export const sectionPropertyDefinitions = {
             label: 'Name',
             type: 'text',
             placeholder: 'Customer name',
+            required: true,
           },
           {
             key: 'role',
@@ -196,6 +204,7 @@ export const sectionPropertyDefinitions = {
             label: 'Quote',
             type: 'textarea',
             placeholder: 'Customer feedback',
+            required: true,
           },
         ],
       },

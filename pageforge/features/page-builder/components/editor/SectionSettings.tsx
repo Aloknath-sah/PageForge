@@ -100,6 +100,8 @@ export default function SectionSettings() {
                       }
                       fields={field.fields}
                       summaryField={field.summaryField}
+                      minItems={field.minItems}
+                      maxItems={field.maxItems}
                       createItem={field.createItem}
                     />
                   );

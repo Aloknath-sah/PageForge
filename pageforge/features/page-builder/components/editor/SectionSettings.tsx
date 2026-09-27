@@ -13,17 +13,33 @@ export default function SectionSettings() {
     const id = state.selectedSectionId;
 
     return (
-      state.config.sections.find((section) => section.id === id) ?? null
+      state.config.sections.find(
+        (section) => section.id === id,
+      ) ?? null
     );
   });
 
-  const updateSectionField = usePageEditorStore(
-    (state) => state.updateSectionField,
-  );
+  const updateSectionField =
+    usePageEditorStore(
+      (state) => state.updateSectionField,
+    );
 
-  const setSectionEnabled = usePageEditorStore(
-    (state) => state.setSectionEnabled,
-  );
+  const setSectionEnabled =
+    usePageEditorStore(
+      (state) => state.setSectionEnabled,
+    );
+
+  const beginHistoryTransaction =
+    usePageEditorStore(
+      (state) =>
+        state.beginHistoryTransaction,
+    );
+
+  const endHistoryTransaction =
+    usePageEditorStore(
+      (state) =>
+        state.endHistoryTransaction,
+    );
 
   if (!selectedSection) {
     return (
@@ -35,7 +51,10 @@ export default function SectionSettings() {
     );
   }
 
-  const definition = getSectionPropertyDefinition(selectedSection.type);
+  const definition =
+    getSectionPropertyDefinition(
+      selectedSection.type,
+    );
 
   return (
     <aside className="flex w-80 shrink-0 flex-col border-l border-gray-200 bg-white">
@@ -59,7 +78,9 @@ export default function SectionSettings() {
         <div className="space-y-6 p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-900">Visible</p>
+              <p className="text-sm font-medium text-gray-900">
+                Visible
+              </p>
 
               <p className="mt-1 text-xs leading-5 text-gray-500">
                 Show this section on the landing page.
@@ -83,48 +104,97 @@ export default function SectionSettings() {
           <div className="border-t border-gray-100 pt-6">
             <div className="space-y-5">
               {definition.fields.map((field) => {
-                if (field.type === 'collection') {
-                  const collectionValue = selectedSection.props[field.key];
+                if (
+                  field.type ===
+                  'collection'
+                ) {
+                  const collectionValue =
+                    selectedSection.props[
+                      field.key
+                    ];
 
                   return (
                     <CollectionField
-                      key={String(field.key)}
-                      sectionId={selectedSection.id}
-                      collectionKey={String(field.key)}
+                      key={String(
+                        field.key,
+                      )}
+                      sectionId={
+                        selectedSection.id
+                      }
+                      collectionKey={String(
+                        field.key,
+                      )}
                       label={field.label}
-                      itemLabel={field.itemLabel}
+                      itemLabel={
+                        field.itemLabel
+                      }
                       items={
-                        Array.isArray(collectionValue)
+                        Array.isArray(
+                          collectionValue,
+                        )
                           ? collectionValue
                           : []
                       }
-                      fields={field.fields}
-                      summaryField={field.summaryField}
-                      minItems={field.minItems}
-                      maxItems={field.maxItems}
-                      createItem={field.createItem}
+                      fields={
+                        field.fields
+                      }
+                      summaryField={
+                        field.summaryField
+                      }
+                      minItems={
+                        field.minItems
+                      }
+                      maxItems={
+                        field.maxItems
+                      }
+                      createItem={
+                        field.createItem
+                      }
                     />
                   );
                 }
 
-                const value = selectedSection.props[field.key];
+                const value =
+                  selectedSection.props[
+                    field.key
+                  ];
 
                 return (
                   <PropertyField
-                    key={String(field.key)}
+                    key={String(
+                      field.key,
+                    )}
                     label={field.label}
                     type={field.type}
-                    value={typeof value === 'string' ? value : ''}
-                    placeholder={field.placeholder}
+                    value={
+                      typeof value ===
+                      'string'
+                        ? value
+                        : ''
+                    }
+                    placeholder={
+                      field.placeholder
+                    }
                     description={
-                      'description' in field
+                      'description' in
+                      field
                         ? field.description
                         : undefined
                     }
-                    onChange={(nextValue) =>
+                    onFocus={
+                      beginHistoryTransaction
+                    }
+                    onBlur={
+                      endHistoryTransaction
+                    }
+                    onChange={(
+                      nextValue,
+                    ) =>
                       updateSectionField(
                         selectedSection.id,
-                        String(field.key),
+                        String(
+                          field.key,
+                        ),
                         nextValue,
                       )
                     }

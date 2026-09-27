@@ -6,6 +6,8 @@ import SectionSettings from './SectionSettings';
 
 import { usePageEditorStore } from '../../providers/page-editor-provider';
 
+import { useEditorHistoryShortcuts } from '../../hooks/use-editor-history-shortcuts';
+
 type PageBuilderProps = {
   pageId: string;
 };
@@ -33,6 +35,11 @@ export default function PageBuilder({
     (state) => state.redo,
   );
 
+  useEditorHistoryShortcuts({
+    undo,
+    redo,
+  });
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-100">
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-5">
@@ -52,7 +59,7 @@ export default function PageBuilder({
               type="button"
               onClick={undo}
               disabled={!canUndo}
-              title="Undo"
+              title="Undo (Ctrl/Cmd + Z)"
               aria-label="Undo last change"
               className="rounded-md px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
             >
@@ -63,7 +70,7 @@ export default function PageBuilder({
               type="button"
               onClick={redo}
               disabled={!canRedo}
-              title="Redo"
+              title="Redo (Ctrl/Cmd + Shift + Z)"
               aria-label="Redo last undone change"
               className="rounded-md px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
             >

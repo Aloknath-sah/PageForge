@@ -11,6 +11,8 @@ type PropertyFieldProps = {
   placeholder?: string;
   description?: string;
   onChange: (value: string) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 };
 
 export default function PropertyField({
@@ -20,9 +22,13 @@ export default function PropertyField({
   placeholder,
   description,
   onChange,
+  onFocus,
+  onBlur,
 }: PropertyFieldProps) {
   const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    event: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement
+    >,
   ) => {
     onChange(event.target.value);
   };
@@ -44,6 +50,8 @@ export default function PropertyField({
           value={value}
           placeholder={placeholder}
           onChange={handleChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
           rows={4}
           className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         />
@@ -53,6 +61,8 @@ export default function PropertyField({
           value={value}
           placeholder={placeholder}
           onChange={handleChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
           className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         />
       )}

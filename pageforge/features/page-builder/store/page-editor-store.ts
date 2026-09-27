@@ -80,6 +80,10 @@ export type PageEditorState = {
     toIndex: number,
   ) => void;
 
+  beginHistoryTransaction: () => void;
+
+  endHistoryTransaction: () => void;
+
   undo: () => void;
 
   redo: () => void;
@@ -99,18 +103,6 @@ function pushHistory(
     ...history,
     cloneConfig(config),
   ].slice(-MAX_HISTORY_ENTRIES);
-}
-
-function commitConfigChange(
-  state: PageEditorState,
-  nextConfig: PageConfig,
-) {
-  return {
-    config: nextConfig,
-    past: pushHistory(state.past, state.config),
-    future: [],
-    isDirty: true,
-  };
 }
 
 function moveItem<T>(
@@ -151,7 +143,8 @@ function resolveSelectedSectionId(
   if (
     selectedSectionId &&
     config.sections.some(
-      (section) => section.id === selectedSectionId,
+      (section) =>
+        section.id === selectedSectionId,
     )
   ) {
     return selectedSectionId;
@@ -162,8 +155,79 @@ function resolveSelectedSectionId(
 
 export const createPageEditorStore = (
   initialConfig: PageConfig,
-) =>
-  createStore<PageEditorState>()((set) => ({
+) => {
+  /*
+   * History transaction state intentionally lives outside
+   * the persisted PageEditorState.
+   *
+   * This is editor-only bookkeeping and should never become
+   * part of PageConfig.
+   */
+  let activeHistoryTransaction: PageConfig | null =
+    null;
+
+  let historyTransactionChanged = false;
+
+  function clearHistoryTransaction() {
+    activeHistoryTransaction = null;
+    historyTransactionChanged = false;
+  }
+
+  function commitConfigChange(
+    state: PageEditorState,
+    nextConfig: PageConfig,
+  ) {
+    const historyBase =
+      activeHistoryTransaction ??
+      state.config;
+
+    clearHistoryTransaction();
+
+    return {
+      config: nextConfig,
+
+      past: pushHistory(
+        state.past,
+        historyBase,
+      ),
+
+      future: [],
+
+      isDirty: true,
+    };
+  }
+
+  function applyConfigChange(
+    state: PageEditorState,
+    nextConfig: PageConfig,
+  ) {
+    /*
+     * During a transaction, the config still updates
+     * immediately, but the history snapshot is deferred
+     * until endHistoryTransaction().
+     */
+    if (activeHistoryTransaction) {
+      historyTransactionChanged = true;
+
+      return {
+        config: nextConfig,
+
+        /*
+         * Any new edit invalidates the redo branch.
+         */
+        future: [],
+
+        isDirty: true,
+      };
+    }
+
+    return commitConfigChange(
+      state,
+      nextConfig,
+    );
+  }
+
+  return createStore<PageEditorState>()((set) => ({
     config: cloneConfig(initialConfig),
 
     selectedSectionId:
@@ -183,7 +247,8 @@ export const createPageEditorStore = (
 
     addSection: (type) => {
       set((state) => {
-        const newSection = createDefaultSection(type);
+        const newSection =
+          createDefaultSection(type);
 
         const currentSections =
           state.config.sections;
@@ -306,7 +371,10 @@ export const createPageEditorStore = (
         const duplicatedSection =
           cloneConfig({
             ...state.config,
-            sections: [sourceSection],
+
+            sections: [
+              sourceSection,
+            ],
           }).sections[0];
 
         duplicatedSection.id =
@@ -439,7 +507,8 @@ export const createPageEditorStore = (
             state.config.sections.map(
               (section) => {
                 if (
-                  section.id !== sectionId ||
+                  section.id !==
+                    sectionId ||
                   section.type !== type
                 ) {
                   return section;
@@ -457,7 +526,7 @@ export const createPageEditorStore = (
             ),
         };
 
-        return commitConfigChange(
+        return applyConfigChange(
           state,
           nextConfig,
         );
@@ -480,7 +549,8 @@ export const createPageEditorStore = (
         }
 
         if (
-          targetSection.enabled === enabled
+          targetSection.enabled ===
+          enabled
         ) {
           return state;
         }
@@ -539,7 +609,12 @@ export const createPageEditorStore = (
           >
         )[field];
 
-        if (Object.is(currentValue, value)) {
+        if (
+          Object.is(
+            currentValue,
+            value,
+          )
+        ) {
           return state;
         }
 
@@ -549,7 +624,8 @@ export const createPageEditorStore = (
           sections:
             state.config.sections.map(
               (section) =>
-                section.id === sectionId
+                section.id ===
+                sectionId
                   ? {
                       ...section,
 
@@ -563,7 +639,7 @@ export const createPageEditorStore = (
             ),
         };
 
-        return commitConfigChange(
+        return applyConfigChange(
           state,
           nextConfig,
         );
@@ -591,7 +667,11 @@ export const createPageEditorStore = (
             collectionKey as keyof typeof targetSection.props
           ];
 
-        if (!Array.isArray(currentValue)) {
+        if (
+          !Array.isArray(
+            currentValue,
+          )
+        ) {
           return state;
         }
 
@@ -602,7 +682,8 @@ export const createPageEditorStore = (
             state.config.sections.map(
               (section) => {
                 if (
-                  section.id !== sectionId
+                  section.id !==
+                  sectionId
                 ) {
                   return section;
                 }
@@ -652,7 +733,11 @@ export const createPageEditorStore = (
             collectionKey as keyof typeof targetSection.props
           ];
 
-        if (!Array.isArray(currentValue)) {
+        if (
+          !Array.isArray(
+            currentValue,
+          )
+        ) {
           return state;
         }
 
@@ -662,7 +747,8 @@ export const createPageEditorStore = (
           currentValue.map((item) => {
             if (
               !item ||
-              typeof item !== 'object' ||
+              typeof item !==
+                'object' ||
               !('id' in item) ||
               item.id !== itemId
             ) {
@@ -670,7 +756,9 @@ export const createPageEditorStore = (
             }
 
             const hasChanges =
-              Object.entries(patch).some(
+              Object.entries(
+                patch,
+              ).some(
                 ([key, value]) =>
                   !Object.is(
                     (
@@ -706,7 +794,8 @@ export const createPageEditorStore = (
             state.config.sections.map(
               (section) => {
                 if (
-                  section.id !== sectionId
+                  section.id !==
+                  sectionId
                 ) {
                   return section;
                 }
@@ -717,14 +806,15 @@ export const createPageEditorStore = (
                   props: {
                     ...section.props,
 
-                    [collectionKey]: nextItems,
+                    [collectionKey]:
+                      nextItems,
                   },
                 } as PageSection;
               },
             ),
         };
 
-        return commitConfigChange(
+        return applyConfigChange(
           state,
           nextConfig,
         );
@@ -752,7 +842,11 @@ export const createPageEditorStore = (
             collectionKey as keyof typeof targetSection.props
           ];
 
-        if (!Array.isArray(currentValue)) {
+        if (
+          !Array.isArray(
+            currentValue,
+          )
+        ) {
           return state;
         }
 
@@ -761,7 +855,8 @@ export const createPageEditorStore = (
             (item) =>
               !(
                 item &&
-                typeof item === 'object' &&
+                typeof item ===
+                  'object' &&
                 'id' in item &&
                 item.id === itemId
               ),
@@ -781,7 +876,8 @@ export const createPageEditorStore = (
             state.config.sections.map(
               (section) => {
                 if (
-                  section.id !== sectionId
+                  section.id !==
+                  sectionId
                 ) {
                   return section;
                 }
@@ -792,7 +888,8 @@ export const createPageEditorStore = (
                   props: {
                     ...section.props,
 
-                    [collectionKey]: nextItems,
+                    [collectionKey]:
+                      nextItems,
                   },
                 } as PageSection;
               },
@@ -837,9 +934,13 @@ export const createPageEditorStore = (
           ];
 
         if (
-          !Array.isArray(currentValue) ||
-          fromIndex >= currentValue.length ||
-          toIndex >= currentValue.length
+          !Array.isArray(
+            currentValue,
+          ) ||
+          fromIndex >=
+            currentValue.length ||
+          toIndex >=
+            currentValue.length
         ) {
           return state;
         }
@@ -850,7 +951,10 @@ export const createPageEditorStore = (
           toIndex,
         );
 
-        if (nextItems === currentValue) {
+        if (
+          nextItems ===
+          currentValue
+        ) {
           return state;
         }
 
@@ -861,7 +965,8 @@ export const createPageEditorStore = (
             state.config.sections.map(
               (section) => {
                 if (
-                  section.id !== sectionId
+                  section.id !==
+                  sectionId
                 ) {
                   return section;
                 }
@@ -872,7 +977,8 @@ export const createPageEditorStore = (
                   props: {
                     ...section.props,
 
-                    [collectionKey]: nextItems,
+                    [collectionKey]:
+                      nextItems,
                   },
                 } as PageSection;
               },
@@ -886,9 +992,114 @@ export const createPageEditorStore = (
       });
     },
 
+    beginHistoryTransaction: () => {
+      set((state) => {
+        /*
+         * Avoid nested transactions. Focus/blur should
+         * normally produce a clean pair, but this makes
+         * the API defensive.
+         */
+        if (
+          activeHistoryTransaction
+        ) {
+          return state;
+        }
+
+        activeHistoryTransaction =
+          cloneConfig(
+            state.config,
+          );
+
+        historyTransactionChanged =
+          false;
+
+        return state;
+      });
+    },
+
+    endHistoryTransaction: () => {
+      set((state) => {
+        if (
+          !activeHistoryTransaction
+        ) {
+          return state;
+        }
+
+        if (
+          !historyTransactionChanged
+        ) {
+          clearHistoryTransaction();
+          return state;
+        }
+
+        const historyBase =
+          activeHistoryTransaction;
+
+        clearHistoryTransaction();
+
+        return {
+          past: pushHistory(
+            state.past,
+            historyBase,
+          ),
+
+          future: [],
+
+          isDirty: true,
+        };
+      });
+    },
+
     undo: () => {
       set((state) => {
-        if (state.past.length === 0) {
+        /*
+         * If the user presses Ctrl/Cmd + Z while actively
+         * editing a field, undo the entire current editing
+         * transaction first.
+         */
+        if (
+          activeHistoryTransaction &&
+          historyTransactionChanged
+        ) {
+          const transactionBase =
+            activeHistoryTransaction;
+
+          const currentConfig =
+            state.config;
+
+          clearHistoryTransaction();
+
+          return {
+            config:
+              transactionBase,
+
+            past: state.past,
+
+            future: [
+              ...state.future,
+              cloneConfig(
+                currentConfig,
+              ),
+            ].slice(
+              -MAX_HISTORY_ENTRIES,
+            ),
+
+            selectedSectionId:
+              resolveSelectedSectionId(
+                state.selectedSectionId,
+                transactionBase,
+              ),
+
+            isDirty:
+              state.past.length > 0,
+          };
+        }
+
+        clearHistoryTransaction();
+
+        if (
+          state.past.length === 0
+        ) {
           return state;
         }
 
@@ -902,15 +1113,22 @@ export const createPageEditorStore = (
 
         const nextFuture = [
           ...state.future,
-          cloneConfig(state.config),
-        ].slice(-MAX_HISTORY_ENTRIES);
+          cloneConfig(
+            state.config,
+          ),
+        ].slice(
+          -MAX_HISTORY_ENTRIES,
+        );
 
         return {
-          config: previousConfig,
+          config:
+            previousConfig,
 
-          past: nextPast,
+          past:
+            nextPast,
 
-          future: nextFuture,
+          future:
+            nextFuture,
 
           selectedSectionId:
             resolveSelectedSectionId(
@@ -926,7 +1144,17 @@ export const createPageEditorStore = (
 
     redo: () => {
       set((state) => {
-        if (state.future.length === 0) {
+        /*
+         * A new edit invalidates redo, so normally there
+         * will be no future state while a transaction is
+         * active. Clearing the transaction here keeps the
+         * behavior defensive and predictable.
+         */
+        clearHistoryTransaction();
+
+        if (
+          state.future.length === 0
+        ) {
           return state;
         }
 
@@ -940,15 +1168,22 @@ export const createPageEditorStore = (
 
         const nextPast = [
           ...state.past,
-          cloneConfig(state.config),
-        ].slice(-MAX_HISTORY_ENTRIES);
+          cloneConfig(
+            state.config,
+          ),
+        ].slice(
+          -MAX_HISTORY_ENTRIES,
+        );
 
         return {
-          config: nextConfig,
+          config:
+            nextConfig,
 
-          past: nextPast,
+          past:
+            nextPast,
 
-          future: nextFuture,
+          future:
+            nextFuture,
 
           selectedSectionId:
             resolveSelectedSectionId(
@@ -962,3 +1197,4 @@ export const createPageEditorStore = (
       });
     },
   }));
+};

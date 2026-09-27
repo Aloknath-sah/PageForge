@@ -20,14 +20,22 @@ const SECTION_OPTIONS: Array<{
     type: 'hero',
     label: 'Hero',
   },
+
   {
     type: 'features',
     label: 'Features',
   },
+
+  {
+    type: 'faq',
+    label: 'FAQ',
+  },
+
   {
     type: 'testimonials',
     label: 'Testimonials',
   },
+
   {
     type: 'cta',
     label: 'CTA',
@@ -35,25 +43,47 @@ const SECTION_OPTIONS: Array<{
 ];
 
 export default function SectionList() {
-  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [
+    showAddMenu,
+    setShowAddMenu,
+  ] = useState(false);
 
-  const sections = usePageEditorStore((state) => state.config.sections);
+  const sections =
+    usePageEditorStore(
+      (state) =>
+        state.config.sections,
+    );
 
-  const addSection = usePageEditorStore((state) => state.addSection);
+  const addSection =
+    usePageEditorStore(
+      (state) =>
+        state.addSection,
+    );
 
-  const reorderSections = usePageEditorStore((state) => state.reorderSections);
+  const reorderSections =
+    usePageEditorStore(
+      (state) =>
+        state.reorderSections,
+    );
 
-  const handleAddSection = (type: SectionType) => {
+  const handleAddSection = (
+    type: SectionType,
+  ) => {
     addSection(type);
+
     setShowAddMenu(false);
   };
 
   return (
     <aside className="flex w-72 shrink-0 flex-col border-r border-gray-200 bg-white">
       <div className="border-b border-gray-200 px-4 py-4">
-        <h2 className="text-sm font-semibold text-gray-900">Sections</h2>
+        <h2 className="text-sm font-semibold text-gray-900">
+          Sections
+        </h2>
 
-        <p className="mt-1 text-xs text-gray-500">Drag to reorder your page.</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Drag to reorder your page.
+        </p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -63,29 +93,45 @@ export default function SectionList() {
               return;
             }
 
-            const { source } = event.operation;
+            const { source } =
+              event.operation;
 
-            if (!isSortable(source)) {
+            if (
+              !isSortable(source)
+            ) {
               return;
             }
 
-            const { initialIndex, index } = source;
+            const {
+              initialIndex,
+              index,
+            } = source;
 
-            if (initialIndex === index) {
+            if (
+              initialIndex === index
+            ) {
               return;
             }
 
-            reorderSections(initialIndex, index);
+            reorderSections(
+              initialIndex,
+              index,
+            );
           }}
         >
           <div className="space-y-2">
-            {sections.map((section, index) => (
-              <SortableSectionItem
-                key={section.id}
-                section={section}
-                index={index}
-              />
-            ))}
+            {sections.map(
+              (
+                section,
+                index,
+              ) => (
+                <SortableSectionItem
+                  key={section.id}
+                  section={section}
+                  index={index}
+                />
+              ),
+            )}
           </div>
         </DragDropProvider>
       </div>
@@ -98,23 +144,36 @@ export default function SectionList() {
             </p>
 
             <div className="mt-1 space-y-1">
-              {SECTION_OPTIONS.map((option) => (
-                <button
-                  key={option.type}
-                  type="button"
-                  onClick={() => handleAddSection(option.type)}
-                  className="w-full rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  {option.label}
-                </button>
-              ))}
+              {SECTION_OPTIONS.map(
+                (option) => (
+                  <button
+                    key={
+                      option.type
+                    }
+                    type="button"
+                    onClick={() =>
+                      handleAddSection(
+                        option.type,
+                      )
+                    }
+                    className="w-full rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    {option.label}
+                  </button>
+                ),
+              )}
             </div>
           </div>
         )}
 
         <button
           type="button"
-          onClick={() => setShowAddMenu((current) => !current)}
+          onClick={() =>
+            setShowAddMenu(
+              (current) =>
+                !current,
+            )
+          }
           className="w-full rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
         >
           + Add Section

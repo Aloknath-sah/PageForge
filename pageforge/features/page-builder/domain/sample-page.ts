@@ -4,8 +4,11 @@ export const samplePage: PageConfig = {
   schemaVersion: 1,
 
   seo: {
-    title: 'Acme AI — Automate Your Workflow',
-    description: 'Automate repetitive business workflows with Acme AI.',
+    title:
+      'Acme AI — Automate Your Workflow',
+
+    description:
+      'Automate repetitive business workflows with Acme AI.',
   },
 
   theme: {
@@ -22,9 +25,12 @@ export const samplePage: PageConfig = {
       type: 'hero',
       enabled: true,
       props: {
-        title: 'Build your business faster',
-        description: 'Build faster workflows without repetitive manual work.',
-        primaryCtaText: 'Get Started',
+        title:
+          'Build your business faster',
+        description:
+          'Build faster workflows without repetitive manual work.',
+        primaryCtaText:
+          'Get Started',
         primaryCtaUrl: '/signup',
       },
     },
@@ -34,23 +40,67 @@ export const samplePage: PageConfig = {
       type: 'features',
       enabled: true,
       props: {
-        title: 'Everything you need',
-        description: 'Powerful tools to automate your daily workflow.',
+        title:
+          'Everything you need',
+        description:
+          'Powerful tools to automate your daily workflow.',
         items: [
           {
             id: 'feature-1',
             title: 'Automate',
-            description: 'Automate repetitive tasks and workflows.',
+            description:
+              'Automate repetitive tasks and workflows.',
           },
+
           {
             id: 'feature-2',
-            title: 'Collaborate',
-            description: 'Work together from a single workspace.',
+            title:
+              'Collaborate',
+            description:
+              'Work together from a single workspace.',
           },
+
           {
             id: 'feature-3',
             title: 'Measure',
-            description: 'Understand how your workflows perform.',
+            description:
+              'Understand how your workflows perform.',
+          },
+        ],
+      },
+    },
+
+    {
+      id: 'faq-1',
+      type: 'faq',
+      enabled: true,
+      props: {
+        title:
+          'Frequently asked questions',
+
+        items: [
+          {
+            id: 'faq-item-1',
+            question:
+              'What is PageForge?',
+            answer:
+              'PageForge is a visual page builder for creating and editing landing pages.',
+          },
+
+          {
+            id: 'faq-item-2',
+            question:
+              'Can I customize my page?',
+            answer:
+              'Yes. You can edit section content directly from the settings panel.',
+          },
+
+          {
+            id: 'faq-item-3',
+            question:
+              'Can I reorder sections?',
+            answer:
+              'Yes. Sections can be reordered directly from the section list.',
           },
         ],
       },
@@ -61,13 +111,18 @@ export const samplePage: PageConfig = {
       type: 'testimonials',
       enabled: true,
       props: {
-        title: 'Loved by teams',
+        title:
+          'Loved by teams',
+
         items: [
           {
             id: 'testimonial-1',
-            name: 'Sarah Johnson',
-            role: 'Product Manager',
-            quote: 'We reduced repetitive work significantly.',
+            name:
+              'Sarah Johnson',
+            role:
+              'Product Manager',
+            quote:
+              'We reduced repetitive work significantly.',
           },
         ],
       },
@@ -78,9 +133,12 @@ export const samplePage: PageConfig = {
       type: 'cta',
       enabled: true,
       props: {
-        title: 'Ready to get started?',
-        description: 'Create your first landing page in minutes.',
-        buttonText: 'Create Your Page',
+        title:
+          'Ready to get started?',
+        description:
+          'Create your first landing page in minutes.',
+        buttonText:
+          'Create Your Page',
         buttonUrl: '/signup',
       },
     },

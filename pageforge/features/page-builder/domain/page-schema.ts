@@ -1,11 +1,13 @@
 export const SECTION_TYPES = [
   'hero',
   'features',
+  'faq',
   'testimonials',
   'cta',
 ] as const;
 
-export type SectionType = (typeof SECTION_TYPES)[number];
+export type SectionType =
+  (typeof SECTION_TYPES)[number];
 
 export type HeroProps = {
   title: string;
@@ -28,6 +30,17 @@ export type FeaturesProps = {
   items: FeatureItem[];
 };
 
+export type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
+export type FaqProps = {
+  title: string;
+  items: FaqItem[];
+};
+
 export type TestimonialItem = {
   id: string;
   name: string;
@@ -48,33 +61,59 @@ export type CtaProps = {
   buttonUrl: string;
 };
 
-type BaseSection<TType extends SectionType, TProps> = {
+type BaseSection<
+  TType extends SectionType,
+  TProps,
+> = {
   id: string;
   type: TType;
   enabled: boolean;
   props: TProps;
 };
 
-export type HeroSection = BaseSection<'hero', HeroProps>;
-
-export type FeaturesSection = BaseSection<'features', FeaturesProps>;
-
-export type TestimonialsSection = BaseSection<
-  'testimonials',
-  TestimonialsProps
+export type HeroSection = BaseSection<
+  'hero',
+  HeroProps
 >;
 
-export type CtaSection = BaseSection<'cta', CtaProps>;
+export type FeaturesSection = BaseSection<
+  'features',
+  FeaturesProps
+>;
+
+export type FaqSection = BaseSection<
+  'faq',
+  FaqProps
+>;
+
+export type TestimonialsSection =
+  BaseSection<
+    'testimonials',
+    TestimonialsProps
+  >;
+
+export type CtaSection = BaseSection<
+  'cta',
+  CtaProps
+>;
 
 export type PageSection =
-  HeroSection | FeaturesSection | TestimonialsSection | CtaSection;
+  | HeroSection
+  | FeaturesSection
+  | FaqSection
+  | TestimonialsSection
+  | CtaSection;
 
 export type PageTheme = {
   primaryColor: string;
   backgroundColor: string;
   textColor: string;
   fontFamily: string;
-  borderRadius: 'none' | 'small' | 'medium' | 'large';
+  borderRadius:
+    | 'none'
+    | 'small'
+    | 'medium'
+    | 'large';
 };
 
 export type PageSeo = {
@@ -87,5 +126,6 @@ export type PageConfig = {
   schemaVersion: number;
   seo: PageSeo;
   theme: PageTheme;
+  fontFamily?: string;
   sections: PageSection[];
 };

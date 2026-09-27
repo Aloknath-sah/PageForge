@@ -1,7 +1,13 @@
-import type { PageSection, SectionType } from './page-schema';
+import type {
+  PageSection,
+  SectionType,
+} from './page-schema';
 
-export function createDefaultSection(type: SectionType): PageSection {
-  const id = crypto.randomUUID();
+export function createDefaultSection(
+  type: SectionType,
+): PageSection {
+  const id =
+    crypto.randomUUID();
 
   switch (type) {
     case 'hero':
@@ -10,9 +16,12 @@ export function createDefaultSection(type: SectionType): PageSection {
         type: 'hero',
         enabled: true,
         props: {
-          title: 'Build something amazing',
-          description: 'Tell your visitors what makes your product different.',
-          primaryCtaText: 'Get Started',
+          title:
+            'Build something amazing',
+          description:
+            'Tell your visitors what makes your product different.',
+          primaryCtaText:
+            'Get Started',
           primaryCtaUrl: '#',
         },
       };
@@ -23,23 +32,55 @@ export function createDefaultSection(type: SectionType): PageSection {
         type: 'features',
         enabled: true,
         props: {
-          title: 'Everything you need',
-          description: 'Highlight the most important benefits of your product.',
+          title:
+            'Everything you need',
+          description:
+            'Highlight the most important benefits of your product.',
           items: [
             {
               id: crypto.randomUUID(),
               title: 'Feature One',
-              description: 'Describe the first benefit of your product.',
+              description:
+                'Describe the first benefit of your product.',
             },
             {
               id: crypto.randomUUID(),
               title: 'Feature Two',
-              description: 'Describe the second benefit of your product.',
+              description:
+                'Describe the second benefit of your product.',
             },
             {
               id: crypto.randomUUID(),
               title: 'Feature Three',
-              description: 'Describe the third benefit of your product.',
+              description:
+                'Describe the third benefit of your product.',
+            },
+          ],
+        },
+      };
+
+    case 'faq':
+      return {
+        id,
+        type: 'faq',
+        enabled: true,
+        props: {
+          title:
+            'Frequently asked questions',
+          items: [
+            {
+              id: crypto.randomUUID(),
+              question:
+                'What is PageForge?',
+              answer:
+                'PageForge is a visual page builder for creating and editing landing pages.',
+            },
+            {
+              id: crypto.randomUUID(),
+              question:
+                'Can I customize my page?',
+              answer:
+                'Yes. You can edit section content directly from the settings panel.',
             },
           ],
         },
@@ -51,13 +92,15 @@ export function createDefaultSection(type: SectionType): PageSection {
         type: 'testimonials',
         enabled: true,
         props: {
-          title: 'What our customers say',
+          title:
+            'What our customers say',
           items: [
             {
               id: crypto.randomUUID(),
               name: 'John Doe',
               role: 'Founder',
-              quote: 'This product made our workflow dramatically simpler.',
+              quote:
+                'This product made our workflow dramatically simpler.',
             },
           ],
         },
@@ -69,9 +112,12 @@ export function createDefaultSection(type: SectionType): PageSection {
         type: 'cta',
         enabled: true,
         props: {
-          title: 'Ready to get started?',
-          description: 'Create your first landing page today.',
-          buttonText: 'Get Started',
+          title:
+            'Ready to get started?',
+          description:
+            'Create your first landing page today.',
+          buttonText:
+            'Get Started',
           buttonUrl: '#',
         },
       };

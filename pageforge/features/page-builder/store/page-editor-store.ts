@@ -20,6 +20,10 @@ export type PageEditorState = {
 
   isDirty: boolean;
 
+  past: PageConfig[];
+
+  future: PageConfig[];
+
   selectSection: (sectionId: string | null) => void;
 
   addSection: (type: SectionType) => void;
@@ -28,7 +32,10 @@ export type PageEditorState = {
 
   duplicateSection: (sectionId: string) => void;
 
-  reorderSections: (fromIndex: number, toIndex: number) => void;
+  reorderSections: (
+    fromIndex: number,
+    toIndex: number,
+  ) => void;
 
   updateSectionProps: <T extends SectionType>(
     sectionId: string,
@@ -36,7 +43,10 @@ export type PageEditorState = {
     patch: Partial<PropsFor<T>>,
   ) => void;
 
-  setSectionEnabled: (sectionId: string, enabled: boolean) => void;
+  setSectionEnabled: (
+    sectionId: string,
+    enabled: boolean,
+  ) => void;
 
   updateSectionField: (
     sectionId: string,
@@ -69,9 +79,45 @@ export type PageEditorState = {
     fromIndex: number,
     toIndex: number,
   ) => void;
+
+  undo: () => void;
+
+  redo: () => void;
 };
 
-function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
+const MAX_HISTORY_ENTRIES = 50;
+
+function cloneConfig(config: PageConfig): PageConfig {
+  return structuredClone(config);
+}
+
+function pushHistory(
+  history: PageConfig[],
+  config: PageConfig,
+): PageConfig[] {
+  return [
+    ...history,
+    cloneConfig(config),
+  ].slice(-MAX_HISTORY_ENTRIES);
+}
+
+function commitConfigChange(
+  state: PageEditorState,
+  nextConfig: PageConfig,
+) {
+  return {
+    config: nextConfig,
+    past: pushHistory(state.past, state.config),
+    future: [],
+    isDirty: true,
+  };
+}
+
+function moveItem<T>(
+  items: T[],
+  fromIndex: number,
+  toIndex: number,
+): T[] {
   if (
     fromIndex === toIndex ||
     fromIndex < 0 ||
@@ -84,20 +130,50 @@ function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
 
   const nextItems = [...items];
 
-  const [movedItem] = nextItems.splice(fromIndex, 1);
+  const [movedItem] = nextItems.splice(
+    fromIndex,
+    1,
+  );
 
-  nextItems.splice(toIndex, 0, movedItem);
+  nextItems.splice(
+    toIndex,
+    0,
+    movedItem,
+  );
 
   return nextItems;
 }
 
-export const createPageEditorStore = (initialConfig: PageConfig) =>
-  createStore<PageEditorState>()((set) => ({
-    config: initialConfig,
+function resolveSelectedSectionId(
+  selectedSectionId: string | null,
+  config: PageConfig,
+): string | null {
+  if (
+    selectedSectionId &&
+    config.sections.some(
+      (section) => section.id === selectedSectionId,
+    )
+  ) {
+    return selectedSectionId;
+  }
 
-    selectedSectionId: initialConfig.sections[0]?.id ?? null,
+  return config.sections[0]?.id ?? null;
+}
+
+export const createPageEditorStore = (
+  initialConfig: PageConfig,
+) =>
+  createStore<PageEditorState>()((set) => ({
+    config: cloneConfig(initialConfig),
+
+    selectedSectionId:
+      initialConfig.sections[0]?.id ?? null,
 
     isDirty: false,
+
+    past: [],
+
+    future: [],
 
     selectSection: (sectionId) => {
       set({
@@ -109,124 +185,191 @@ export const createPageEditorStore = (initialConfig: PageConfig) =>
       set((state) => {
         const newSection = createDefaultSection(type);
 
-        const currentSections = state.config.sections;
+        const currentSections =
+          state.config.sections;
 
-        const selectedIndex = state.selectedSectionId
-          ? currentSections.findIndex(
-              (section) => section.id === state.selectedSectionId,
-            )
-          : -1;
+        const selectedIndex =
+          state.selectedSectionId
+            ? currentSections.findIndex(
+                (section) =>
+                  section.id ===
+                  state.selectedSectionId,
+              )
+            : -1;
 
         const insertIndex =
-          selectedIndex >= 0 ? selectedIndex + 1 : currentSections.length;
+          selectedIndex >= 0
+            ? selectedIndex + 1
+            : currentSections.length;
 
-        const nextSections = [...currentSections];
+        const nextSections = [
+          ...currentSections,
+        ];
 
-        nextSections.splice(insertIndex, 0, newSection);
+        nextSections.splice(
+          insertIndex,
+          0,
+          newSection,
+        );
+
+        const nextConfig: PageConfig = {
+          ...state.config,
+
+          sections: nextSections,
+        };
 
         return {
-          config: {
-            ...state.config,
-            sections: nextSections,
-          },
+          ...commitConfigChange(
+            state,
+            nextConfig,
+          ),
 
-          selectedSectionId: newSection.id,
-
-          isDirty: true,
+          selectedSectionId:
+            newSection.id,
         };
       });
     },
 
     deleteSection: (sectionId) => {
       set((state) => {
-        const currentSections = state.config.sections;
+        const currentSections =
+          state.config.sections;
 
-        const deletedIndex = currentSections.findIndex(
-          (section) => section.id === sectionId,
-        );
+        const deletedIndex =
+          currentSections.findIndex(
+            (section) =>
+              section.id === sectionId,
+          );
 
         if (deletedIndex === -1) {
           return state;
         }
 
-        const nextSections = currentSections.filter(
-          (section) => section.id !== sectionId,
-        );
+        const nextSections =
+          currentSections.filter(
+            (section) =>
+              section.id !== sectionId,
+          );
 
-        let nextSelectedId = state.selectedSectionId;
+        const nextConfig: PageConfig = {
+          ...state.config,
 
-        if (state.selectedSectionId === sectionId) {
+          sections: nextSections,
+        };
+
+        let nextSelectedId =
+          state.selectedSectionId;
+
+        if (
+          state.selectedSectionId ===
+          sectionId
+        ) {
           const replacement =
-            nextSections[Math.min(deletedIndex, nextSections.length - 1)];
+            nextSections[
+              Math.min(
+                deletedIndex,
+                nextSections.length - 1,
+              )
+            ];
 
-          nextSelectedId = replacement?.id ?? null;
+          nextSelectedId =
+            replacement?.id ?? null;
         }
 
         return {
-          config: {
-            ...state.config,
-            sections: nextSections,
-          },
+          ...commitConfigChange(
+            state,
+            nextConfig,
+          ),
 
-          selectedSectionId: nextSelectedId,
-
-          isDirty: true,
+          selectedSectionId:
+            nextSelectedId,
         };
       });
     },
 
     duplicateSection: (sectionId) => {
       set((state) => {
-        const sourceIndex = state.config.sections.findIndex(
-          (section) => section.id === sectionId,
-        );
+        const sourceIndex =
+          state.config.sections.findIndex(
+            (section) =>
+              section.id === sectionId,
+          );
 
         if (sourceIndex === -1) {
           return state;
         }
 
-        const sourceSection = state.config.sections[sourceIndex];
+        const sourceSection =
+          state.config.sections[sourceIndex];
 
-        const duplicatedSection = structuredClone(sourceSection);
+        const duplicatedSection =
+          cloneConfig({
+            ...state.config,
+            sections: [sourceSection],
+          }).sections[0];
 
-        duplicatedSection.id = crypto.randomUUID();
+        duplicatedSection.id =
+          crypto.randomUUID();
 
-        if (duplicatedSection.type === 'features') {
-          duplicatedSection.props.items = duplicatedSection.props.items.map(
-            (item) => ({
-              ...item,
-              id: crypto.randomUUID(),
-            }),
-          );
+        if (
+          duplicatedSection.type ===
+          'features'
+        ) {
+          duplicatedSection.props.items =
+            duplicatedSection.props.items.map(
+              (item) => ({
+                ...item,
+                id: crypto.randomUUID(),
+              }),
+            );
         }
 
-        if (duplicatedSection.type === 'testimonials') {
-          duplicatedSection.props.items = duplicatedSection.props.items.map(
-            (item) => ({
-              ...item,
-              id: crypto.randomUUID(),
-            }),
-          );
+        if (
+          duplicatedSection.type ===
+          'testimonials'
+        ) {
+          duplicatedSection.props.items =
+            duplicatedSection.props.items.map(
+              (item) => ({
+                ...item,
+                id: crypto.randomUUID(),
+              }),
+            );
         }
 
-        const nextSections = [...state.config.sections];
+        const nextSections = [
+          ...state.config.sections,
+        ];
 
-        nextSections.splice(sourceIndex + 1, 0, duplicatedSection);
+        nextSections.splice(
+          sourceIndex + 1,
+          0,
+          duplicatedSection,
+        );
+
+        const nextConfig: PageConfig = {
+          ...state.config,
+
+          sections: nextSections,
+        };
 
         return {
-          config: {
-            ...state.config,
-            sections: nextSections,
-          },
+          ...commitConfigChange(
+            state,
+            nextConfig,
+          ),
 
-          selectedSectionId: duplicatedSection.id,
-
-          isDirty: true,
+          selectedSectionId:
+            duplicatedSection.id,
         };
       });
     },
 
-    reorderSections: (fromIndex, toIndex) => {
+    reorderSections: (
+      fromIndex,
+      toIndex,
+    ) => {
       set((state) => {
         const nextSections = moveItem(
           state.config.sections,
@@ -234,264 +377,587 @@ export const createPageEditorStore = (initialConfig: PageConfig) =>
           toIndex,
         );
 
-        if (nextSections === state.config.sections) {
+        if (
+          nextSections ===
+          state.config.sections
+        ) {
           return state;
         }
 
-        return {
-          config: {
-            ...state.config,
-            sections: nextSections,
-          },
+        const nextConfig: PageConfig = {
+          ...state.config,
 
-          isDirty: true,
+          sections: nextSections,
         };
+
+        return commitConfigChange(
+          state,
+          nextConfig,
+        );
       });
     },
 
-    updateSectionProps: (sectionId, type, patch) => {
-      set((state) => ({
-        config: {
-          ...state.config,
-
-          sections: state.config.sections.map((section) => {
-            if (section.id !== sectionId || section.type !== type) {
-              return section;
-            }
-
-            return {
-              ...section,
-
-              props: {
-                ...section.props,
-                ...patch,
-              },
-            } as PageSection;
-          }),
-        },
-
-        isDirty: true,
-      }));
-    },
-
-    setSectionEnabled: (sectionId, enabled) => {
-      set((state) => ({
-        config: {
-          ...state.config,
-
-          sections: state.config.sections.map((section) =>
-            section.id === sectionId
-              ? {
-                  ...section,
-                  enabled,
-                }
-              : section,
-          ),
-        },
-
-        isDirty: true,
-      }));
-    },
-
-    updateSectionField: (sectionId, field, value) => {
+    updateSectionProps: (
+      sectionId,
+      type,
+      patch,
+    ) => {
       set((state) => {
-        const targetSection = state.config.sections.find(
-          (section) => section.id === sectionId,
-        );
+        const targetSection =
+          state.config.sections.find(
+            (section) =>
+              section.id === sectionId &&
+              section.type === type,
+          );
 
         if (!targetSection) {
           return state;
         }
 
-        if (!Object.prototype.hasOwnProperty.call(targetSection.props, field)) {
+        const hasChanges =
+          Object.entries(patch).some(
+            ([key, value]) =>
+              !Object.is(
+                (
+                  targetSection.props as Record<
+                    string,
+                    unknown
+                  >
+                )[key],
+                value,
+              ),
+          );
+
+        if (!hasChanges) {
           return state;
         }
 
-        return {
-          config: {
-            ...state.config,
+        const nextConfig: PageConfig = {
+          ...state.config,
 
-            sections: state.config.sections.map((section) =>
-              section.id === sectionId
-                ? {
-                    ...section,
+          sections:
+            state.config.sections.map(
+              (section) => {
+                if (
+                  section.id !== sectionId ||
+                  section.type !== type
+                ) {
+                  return section;
+                }
 
-                    props: {
-                      ...section.props,
-                      [field]: value,
-                    },
-                  }
-                : section,
+                return {
+                  ...section,
+
+                  props: {
+                    ...section.props,
+                    ...patch,
+                  },
+                } as PageSection;
+              },
             ),
-          },
+        };
 
-          isDirty: true,
+        return commitConfigChange(
+          state,
+          nextConfig,
+        );
+      });
+    },
+
+    setSectionEnabled: (
+      sectionId,
+      enabled,
+    ) => {
+      set((state) => {
+        const targetSection =
+          state.config.sections.find(
+            (section) =>
+              section.id === sectionId,
+          );
+
+        if (!targetSection) {
+          return state;
+        }
+
+        if (
+          targetSection.enabled === enabled
+        ) {
+          return state;
+        }
+
+        const nextConfig: PageConfig = {
+          ...state.config,
+
+          sections:
+            state.config.sections.map(
+              (section) =>
+                section.id === sectionId
+                  ? {
+                      ...section,
+                      enabled,
+                    }
+                  : section,
+            ),
+        };
+
+        return commitConfigChange(
+          state,
+          nextConfig,
+        );
+      });
+    },
+
+    updateSectionField: (
+      sectionId,
+      field,
+      value,
+    ) => {
+      set((state) => {
+        const targetSection =
+          state.config.sections.find(
+            (section) =>
+              section.id === sectionId,
+          );
+
+        if (!targetSection) {
+          return state;
+        }
+
+        if (
+          !Object.prototype.hasOwnProperty.call(
+            targetSection.props,
+            field,
+          )
+        ) {
+          return state;
+        }
+
+        const currentValue = (
+          targetSection.props as Record<
+            string,
+            unknown
+          >
+        )[field];
+
+        if (Object.is(currentValue, value)) {
+          return state;
+        }
+
+        const nextConfig: PageConfig = {
+          ...state.config,
+
+          sections:
+            state.config.sections.map(
+              (section) =>
+                section.id === sectionId
+                  ? {
+                      ...section,
+
+                      props: {
+                        ...section.props,
+
+                        [field]: value,
+                      },
+                    }
+                  : section,
+            ),
+        };
+
+        return commitConfigChange(
+          state,
+          nextConfig,
+        );
+      });
+    },
+
+    addCollectionItem: (
+      sectionId,
+      collectionKey,
+      item,
+    ) => {
+      set((state) => {
+        const targetSection =
+          state.config.sections.find(
+            (section) =>
+              section.id === sectionId,
+          );
+
+        if (!targetSection) {
+          return state;
+        }
+
+        const currentValue =
+          targetSection.props[
+            collectionKey as keyof typeof targetSection.props
+          ];
+
+        if (!Array.isArray(currentValue)) {
+          return state;
+        }
+
+        const nextConfig: PageConfig = {
+          ...state.config,
+
+          sections:
+            state.config.sections.map(
+              (section) => {
+                if (
+                  section.id !== sectionId
+                ) {
+                  return section;
+                }
+
+                return {
+                  ...section,
+
+                  props: {
+                    ...section.props,
+
+                    [collectionKey]: [
+                      ...currentValue,
+                      item,
+                    ],
+                  },
+                } as PageSection;
+              },
+            ),
+        };
+
+        return commitConfigChange(
+          state,
+          nextConfig,
+        );
+      });
+    },
+
+    updateCollectionItem: (
+      sectionId,
+      collectionKey,
+      itemId,
+      patch,
+    ) => {
+      set((state) => {
+        const targetSection =
+          state.config.sections.find(
+            (section) =>
+              section.id === sectionId,
+          );
+
+        if (!targetSection) {
+          return state;
+        }
+
+        const currentValue =
+          targetSection.props[
+            collectionKey as keyof typeof targetSection.props
+          ];
+
+        if (!Array.isArray(currentValue)) {
+          return state;
+        }
+
+        let changed = false;
+
+        const nextItems =
+          currentValue.map((item) => {
+            if (
+              !item ||
+              typeof item !== 'object' ||
+              !('id' in item) ||
+              item.id !== itemId
+            ) {
+              return item;
+            }
+
+            const hasChanges =
+              Object.entries(patch).some(
+                ([key, value]) =>
+                  !Object.is(
+                    (
+                      item as Record<
+                        string,
+                        unknown
+                      >
+                    )[key],
+                    value,
+                  ),
+              );
+
+            if (!hasChanges) {
+              return item;
+            }
+
+            changed = true;
+
+            return {
+              ...item,
+              ...patch,
+            };
+          });
+
+        if (!changed) {
+          return state;
+        }
+
+        const nextConfig: PageConfig = {
+          ...state.config,
+
+          sections:
+            state.config.sections.map(
+              (section) => {
+                if (
+                  section.id !== sectionId
+                ) {
+                  return section;
+                }
+
+                return {
+                  ...section,
+
+                  props: {
+                    ...section.props,
+
+                    [collectionKey]: nextItems,
+                  },
+                } as PageSection;
+              },
+            ),
+        };
+
+        return commitConfigChange(
+          state,
+          nextConfig,
+        );
+      });
+    },
+
+    removeCollectionItem: (
+      sectionId,
+      collectionKey,
+      itemId,
+    ) => {
+      set((state) => {
+        const targetSection =
+          state.config.sections.find(
+            (section) =>
+              section.id === sectionId,
+          );
+
+        if (!targetSection) {
+          return state;
+        }
+
+        const currentValue =
+          targetSection.props[
+            collectionKey as keyof typeof targetSection.props
+          ];
+
+        if (!Array.isArray(currentValue)) {
+          return state;
+        }
+
+        const nextItems =
+          currentValue.filter(
+            (item) =>
+              !(
+                item &&
+                typeof item === 'object' &&
+                'id' in item &&
+                item.id === itemId
+              ),
+          );
+
+        if (
+          nextItems.length ===
+          currentValue.length
+        ) {
+          return state;
+        }
+
+        const nextConfig: PageConfig = {
+          ...state.config,
+
+          sections:
+            state.config.sections.map(
+              (section) => {
+                if (
+                  section.id !== sectionId
+                ) {
+                  return section;
+                }
+
+                return {
+                  ...section,
+
+                  props: {
+                    ...section.props,
+
+                    [collectionKey]: nextItems,
+                  },
+                } as PageSection;
+              },
+            ),
+        };
+
+        return commitConfigChange(
+          state,
+          nextConfig,
+        );
+      });
+    },
+
+    reorderCollectionItems: (
+      sectionId,
+      collectionKey,
+      fromIndex,
+      toIndex,
+    ) => {
+      set((state) => {
+        if (
+          fromIndex === toIndex ||
+          fromIndex < 0 ||
+          toIndex < 0
+        ) {
+          return state;
+        }
+
+        const targetSection =
+          state.config.sections.find(
+            (section) =>
+              section.id === sectionId,
+          );
+
+        if (!targetSection) {
+          return state;
+        }
+
+        const currentValue =
+          targetSection.props[
+            collectionKey as keyof typeof targetSection.props
+          ];
+
+        if (
+          !Array.isArray(currentValue) ||
+          fromIndex >= currentValue.length ||
+          toIndex >= currentValue.length
+        ) {
+          return state;
+        }
+
+        const nextItems = moveItem(
+          currentValue,
+          fromIndex,
+          toIndex,
+        );
+
+        if (nextItems === currentValue) {
+          return state;
+        }
+
+        const nextConfig: PageConfig = {
+          ...state.config,
+
+          sections:
+            state.config.sections.map(
+              (section) => {
+                if (
+                  section.id !== sectionId
+                ) {
+                  return section;
+                }
+
+                return {
+                  ...section,
+
+                  props: {
+                    ...section.props,
+
+                    [collectionKey]: nextItems,
+                  },
+                } as PageSection;
+              },
+            ),
+        };
+
+        return commitConfigChange(
+          state,
+          nextConfig,
+        );
+      });
+    },
+
+    undo: () => {
+      set((state) => {
+        if (state.past.length === 0) {
+          return state;
+        }
+
+        const previousConfig =
+          state.past[
+            state.past.length - 1
+          ];
+
+        const nextPast =
+          state.past.slice(0, -1);
+
+        const nextFuture = [
+          ...state.future,
+          cloneConfig(state.config),
+        ].slice(-MAX_HISTORY_ENTRIES);
+
+        return {
+          config: previousConfig,
+
+          past: nextPast,
+
+          future: nextFuture,
+
+          selectedSectionId:
+            resolveSelectedSectionId(
+              state.selectedSectionId,
+              previousConfig,
+            ),
+
+          isDirty:
+            nextPast.length > 0,
         };
       });
     },
 
-    addCollectionItem: (sectionId, collectionKey, item) => {
-      set((state) => ({
-        config: {
-          ...state.config,
-
-          sections: state.config.sections.map((section) => {
-            if (section.id !== sectionId) {
-              return section;
-            }
-
-            const currentValue =
-              section.props[collectionKey as keyof typeof section.props];
-
-            if (!Array.isArray(currentValue)) {
-              return section;
-            }
-
-            return {
-              ...section,
-
-              props: {
-                ...section.props,
-
-                [collectionKey]: [...currentValue, item],
-              },
-            } as PageSection;
-          }),
-        },
-
-        isDirty: true,
-      }));
-    },
-
-    updateCollectionItem: (sectionId, collectionKey, itemId, patch) => {
-      set((state) => ({
-        config: {
-          ...state.config,
-
-          sections: state.config.sections.map((section) => {
-            if (section.id !== sectionId) {
-              return section;
-            }
-
-            const currentValue =
-              section.props[collectionKey as keyof typeof section.props];
-
-            if (!Array.isArray(currentValue)) {
-              return section;
-            }
-
-            return {
-              ...section,
-
-              props: {
-                ...section.props,
-
-                [collectionKey]: currentValue.map((item) =>
-                  item &&
-                  typeof item === 'object' &&
-                  'id' in item &&
-                  item.id === itemId
-                    ? {
-                        ...item,
-                        ...patch,
-                      }
-                    : item,
-                ),
-              },
-            } as PageSection;
-          }),
-        },
-
-        isDirty: true,
-      }));
-    },
-
-    removeCollectionItem: (sectionId, collectionKey, itemId) => {
-      set((state) => ({
-        config: {
-          ...state.config,
-
-          sections: state.config.sections.map((section) => {
-            if (section.id !== sectionId) {
-              return section;
-            }
-
-            const currentValue =
-              section.props[collectionKey as keyof typeof section.props];
-
-            if (!Array.isArray(currentValue)) {
-              return section;
-            }
-
-            return {
-              ...section,
-
-              props: {
-                ...section.props,
-
-                [collectionKey]: currentValue.filter(
-                  (item) =>
-                    !(
-                      item &&
-                      typeof item === 'object' &&
-                      'id' in item &&
-                      item.id === itemId
-                    ),
-                ),
-              },
-            } as PageSection;
-          }),
-        },
-
-        isDirty: true,
-      }));
-    },
-
-    reorderCollectionItems: (sectionId, collectionKey, fromIndex, toIndex) => {
+    redo: () => {
       set((state) => {
-        if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) {
+        if (state.future.length === 0) {
           return state;
         }
 
+        const nextConfig =
+          state.future[
+            state.future.length - 1
+          ];
+
+        const nextFuture =
+          state.future.slice(0, -1);
+
+        const nextPast = [
+          ...state.past,
+          cloneConfig(state.config),
+        ].slice(-MAX_HISTORY_ENTRIES);
+
         return {
-          config: {
-            ...state.config,
+          config: nextConfig,
 
-            sections: state.config.sections.map((section) => {
-              if (section.id !== sectionId) {
-                return section;
-              }
+          past: nextPast,
 
-              const currentValue =
-                section.props[collectionKey as keyof typeof section.props];
+          future: nextFuture,
 
-              if (
-                !Array.isArray(currentValue) ||
-                fromIndex >= currentValue.length ||
-                toIndex >= currentValue.length
-              ) {
-                return section;
-              }
+          selectedSectionId:
+            resolveSelectedSectionId(
+              state.selectedSectionId,
+              nextConfig,
+            ),
 
-              const nextItems = [...currentValue];
-
-              const [movedItem] = nextItems.splice(fromIndex, 1);
-
-              nextItems.splice(toIndex, 0, movedItem);
-
-              return {
-                ...section,
-
-                props: {
-                  ...section.props,
-
-                  [collectionKey]: nextItems,
-                },
-              } as PageSection;
-            }),
-          },
-
-          isDirty: true,
+          isDirty:
+            nextPast.length > 0,
         };
       });
     },

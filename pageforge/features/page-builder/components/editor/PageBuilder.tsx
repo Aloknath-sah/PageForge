@@ -10,19 +10,67 @@ type PageBuilderProps = {
   pageId: string;
 };
 
-export default function PageBuilder({ pageId }: PageBuilderProps) {
-  const isDirty = usePageEditorStore((state) => state.isDirty);
+export default function PageBuilder({
+  pageId,
+}: PageBuilderProps) {
+  const isDirty = usePageEditorStore(
+    (state) => state.isDirty,
+  );
+
+  const canUndo = usePageEditorStore(
+    (state) => state.past.length > 0,
+  );
+
+  const canRedo = usePageEditorStore(
+    (state) => state.future.length > 0,
+  );
+
+  const undo = usePageEditorStore(
+    (state) => state.undo,
+  );
+
+  const redo = usePageEditorStore(
+    (state) => state.redo,
+  );
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-100">
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-5">
         <div>
-          <h1 className="text-lg font-semibold text-gray-950">PageForge</h1>
+          <h1 className="text-lg font-semibold text-gray-950">
+            PageForge
+          </h1>
 
-          <p className="text-xs text-gray-500">Editing page: {pageId}</p>
+          <p className="text-xs text-gray-500">
+            Editing page: {pageId}
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo"
+              aria-label="Undo last change"
+              className="rounded-md px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              ↶
+            </button>
+
+            <button
+              type="button"
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo"
+              aria-label="Redo last undone change"
+              className="rounded-md px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              ↷
+            </button>
+          </div>
+
           <span
             className={[
               'rounded-full px-3 py-1 text-xs font-medium',
@@ -31,7 +79,9 @@ export default function PageBuilder({ pageId }: PageBuilderProps) {
                 : 'bg-green-50 text-green-700',
             ].join(' ')}
           >
-            {isDirty ? 'Draft changes' : 'All changes saved'}
+            {isDirty
+              ? 'Draft changes'
+              : 'All changes saved'}
           </span>
         </div>
       </header>

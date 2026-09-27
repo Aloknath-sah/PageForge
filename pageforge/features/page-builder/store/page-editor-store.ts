@@ -51,6 +51,12 @@ export type PageEditorState = {
     sectionId: string,
     enabled: boolean,
   ) => void;
+
+  updateSectionField: (
+  sectionId: string,
+  field: string,
+  value: unknown,
+) => void;
 };
 
 function moveItem<T>(
@@ -357,4 +363,54 @@ export const createPageEditorStore = (
         isDirty: true,
       }));
     },
+
+    updateSectionField: (
+  sectionId,
+  field,
+  value,
+) => {
+  set((state) => {
+    const targetSection =
+      state.config.sections.find(
+        (section) =>
+          section.id === sectionId,
+      );
+
+    if (!targetSection) {
+      return state;
+    }
+
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        targetSection.props,
+        field,
+      )
+    ) {
+      return state;
+    }
+
+    return {
+      config: {
+        ...state.config,
+
+        sections:
+          state.config.sections.map(
+            (section) =>
+              section.id === sectionId
+                ? {
+                    ...section,
+
+                    props: {
+                      ...section.props,
+                      [field]: value,
+                    },
+                  }
+                : section,
+          ),
+      },
+
+      isDirty: true,
+    };
+  });
+}
   }));

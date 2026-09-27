@@ -1,326 +1,150 @@
 "use client";
 
-import { usePageEditorStore } from "../../providers/page-editor-provider";
+import PropertyField from "./PropertyField";
+
+import {
+  usePageEditorStore,
+} from "../../providers/page-editor-provider";
+
+import {
+  getSectionPropertyDefinition,
+} from "../../domain/section-properties";
 
 export default function SectionSettings() {
-  const selectedSection = usePageEditorStore(
-    (state) => {
+  const selectedSection =
+    usePageEditorStore((state) => {
       const id =
         state.selectedSectionId;
 
       return (
         state.config.sections.find(
-          (section) => section.id === id,
+          (section) =>
+            section.id === id,
         ) ?? null
       );
-    },
-  );
+    });
 
-  const updateSectionProps =
+  const updateSectionField =
     usePageEditorStore(
-      (state) => state.updateSectionProps,
+      (state) =>
+        state.updateSectionField,
     );
 
   const setSectionEnabled =
     usePageEditorStore(
-      (state) => state.setSectionEnabled,
+      (state) =>
+        state.setSectionEnabled,
     );
 
   if (!selectedSection) {
     return (
       <aside className="w-80 shrink-0 border-l border-gray-200 bg-white">
         <div className="flex h-full items-center justify-center px-6 text-center text-sm text-gray-500">
-          Select a section to edit its content.
+          Select a section to edit
+          its content.
         </div>
       </aside>
     );
   }
 
+  const definition =
+    getSectionPropertyDefinition(
+      selectedSection.type,
+    );
+
   return (
-    <aside className="w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-white">
+    <aside className="flex w-80 shrink-0 flex-col border-l border-gray-200 bg-white">
       <div className="border-b border-gray-200 px-5 py-4">
         <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-          Section
+          Section settings
         </p>
 
-        <h2 className="mt-1 text-lg font-semibold capitalize text-gray-900">
-          {selectedSection.type}
+        <h2 className="mt-1 text-lg font-semibold text-gray-900">
+          {definition.label}
         </h2>
+
+        {definition.description && (
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            {definition.description}
+          </p>
+        )}
       </div>
 
-      <div className="space-y-6 p-5">
-        <label className="flex items-center justify-between gap-4">
-          <span>
-            <span className="block text-sm font-medium text-gray-900">
-              Visible
-            </span>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="space-y-6 p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-900">
+                Visible
+              </p>
 
-            <span className="block text-xs text-gray-500">
-              Show this section on the page.
-            </span>
-          </span>
+              <p className="mt-1 text-xs leading-5 text-gray-500">
+                Show this section on the
+                landing page.
+              </p>
+            </div>
 
-          <input
-            type="checkbox"
-            checked={selectedSection.enabled}
-            onChange={(event) =>
-              setSectionEnabled(
-                selectedSection.id,
-                event.target.checked,
-              )
-            }
-            className="h-4 w-4"
-          />
-        </label>
-
-        {selectedSection.type === "hero" && (
-          <>
-            <Field
-              label="Title"
-              value={selectedSection.props.title}
-              onChange={(value) =>
-                updateSectionProps(
+            <input
+              type="checkbox"
+              checked={selectedSection.enabled}
+              onChange={(event) =>
+                setSectionEnabled(
                   selectedSection.id,
-                  "hero",
-                  {
-                    title: value,
-                  },
+                  event.target.checked,
                 )
               }
+              className="mt-0.5 h-4 w-4 rounded border-gray-300"
+              aria-label="Toggle section visibility"
             />
+          </div>
 
-            <TextAreaField
-              label="Description"
-              value={
-                selectedSection.props.description
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "hero",
-                  {
-                    description: value,
-                  },
-                )
-              }
-            />
+          <div className="border-t border-gray-100 pt-6">
+            <div className="space-y-5">
+              {definition.fields.map(
+                (field) => {
+                  const value =
+                    selectedSection.props[
+                      field.key
+                    ];
 
-            <Field
-              label="CTA Text"
-              value={
-                selectedSection.props
-                  .primaryCtaText
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "hero",
-                  {
-                    primaryCtaText: value,
-                  },
-                )
-              }
-            />
-
-            <Field
-              label="CTA URL"
-              value={
-                selectedSection.props
-                  .primaryCtaUrl
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "hero",
-                  {
-                    primaryCtaUrl: value,
-                  },
-                )
-              }
-            />
-          </>
-        )}
-
-        {selectedSection.type ===
-          "features" && (
-          <>
-            <Field
-              label="Title"
-              value={
-                selectedSection.props.title
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "features",
-                  {
-                    title: value,
-                  },
-                )
-              }
-            />
-
-            <TextAreaField
-              label="Description"
-              value={
-                selectedSection.props
-                  .description ?? ""
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "features",
-                  {
-                    description: value,
-                  },
-                )
-              }
-            />
-          </>
-        )}
-
-        {selectedSection.type ===
-          "testimonials" && (
-          <Field
-            label="Title"
-            value={
-              selectedSection.props.title
-            }
-            onChange={(value) =>
-              updateSectionProps(
-                selectedSection.id,
-                "testimonials",
-                {
-                  title: value,
+                  return (
+                    <PropertyField
+                      key={String(
+                        field.key,
+                      )}
+                      label={field.label}
+                      type={field.type}
+                      value={
+                        typeof value ===
+                        "string"
+                          ? value
+                          : ""
+                      }
+                      placeholder={
+                        field.placeholder
+                      }
+                      description={
+                        field.description
+                      }
+                      onChange={(
+                        nextValue,
+                      ) =>
+                        updateSectionField(
+                          selectedSection.id,
+                          String(
+                            field.key,
+                          ),
+                          nextValue,
+                        )
+                      }
+                    />
+                  );
                 },
-              )
-            }
-          />
-        )}
-
-        {selectedSection.type === "cta" && (
-          <>
-            <Field
-              label="Title"
-              value={
-                selectedSection.props.title
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "cta",
-                  {
-                    title: value,
-                  },
-                )
-              }
-            />
-
-            <TextAreaField
-              label="Description"
-              value={
-                selectedSection.props
-                  .description ?? ""
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "cta",
-                  {
-                    description: value,
-                  },
-                )
-              }
-            />
-
-            <Field
-              label="Button Text"
-              value={
-                selectedSection.props
-                  .buttonText
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "cta",
-                  {
-                    buttonText: value,
-                  },
-                )
-              }
-            />
-
-            <Field
-              label="Button URL"
-              value={
-                selectedSection.props.buttonUrl
-              }
-              onChange={(value) =>
-                updateSectionProps(
-                  selectedSection.id,
-                  "cta",
-                  {
-                    buttonUrl: value,
-                  },
-                )
-              }
-            />
-          </>
-        )}
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
-  );
-}
-
-type FieldProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-};
-
-function Field({
-  label,
-  value,
-  onChange,
-}: FieldProps) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-medium text-gray-700">
-        {label}
-      </span>
-
-      <input
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      />
-    </label>
-  );
-}
-
-type TextAreaFieldProps = FieldProps;
-
-function TextAreaField({
-  label,
-  value,
-  onChange,
-}: TextAreaFieldProps) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-medium text-gray-700">
-        {label}
-      </span>
-
-      <textarea
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        rows={4}
-        className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      />
-    </label>
   );
 }

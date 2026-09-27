@@ -13,6 +13,7 @@ export type HeroProps = {
   primaryCtaText: string;
   primaryCtaUrl: string;
   imageUrl?: string;
+  subtitle?: string;
 };
 
 export type FeaturesProps = {

@@ -26,8 +26,11 @@ export function usePageEditorPersistence(
       (state) => state.markSaved,
     );
 
-  const [isHydrated, setIsHydrated] =
-    useState(false);
+  const [hydratedPageId, setHydratedPageId] =
+  useState<string | null>(null);
+
+const isHydrated =
+  hydratedPageId === pageId;
 
   const [saveError, setSaveError] =
     useState<string | null>(
@@ -35,8 +38,8 @@ export function usePageEditorPersistence(
     );
 
   useEffect(() => {
-    setIsHydrated(false);
-    setSaveError(null);
+    setHydratedPageId(pageId);
+    
 
     const persistedConfig =
       loadPageConfig(pageId);
@@ -47,7 +50,7 @@ export function usePageEditorPersistence(
       );
     }
 
-    setIsHydrated(true);
+   
   }, [
     pageId,
     hydrateConfig,

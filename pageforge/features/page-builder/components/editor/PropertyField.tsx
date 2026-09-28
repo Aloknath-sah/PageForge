@@ -2,17 +2,17 @@
 
 import type { ChangeEvent } from 'react';
 
-import type { PropertyFieldType } from '../../domain/section-properties';
+import type { ScalarPropertyType } from '../../domain/section-properties';
 
 type PropertyFieldProps = {
   label: string;
-  type: PropertyFieldType;
+  type: ScalarPropertyType;
   value: string;
   placeholder?: string;
   description?: string;
+  required?: boolean;
+  error?: string;
   onChange: (value: string) => void;
-  onFocus?: () => void;
-  onBlur?: () => void;
 };
 
 export default function PropertyField({
@@ -21,22 +21,36 @@ export default function PropertyField({
   value,
   placeholder,
   description,
+  required = false,
+  error,
   onChange,
-  onFocus,
-  onBlur,
 }: PropertyFieldProps) {
+  const fieldId = label.toLowerCase().replace(/\s+/g, '-');
+  const errorId = `${fieldId}-error`;
+
   const handleChange = (
-    event: ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement
-    >,
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     onChange(event.target.value);
   };
+
+  const inputClassName = [
+    'w-full rounded-lg border px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400',
+    'focus:ring-2',
+    error
+      ? 'border-red-400 focus:border-red-500 focus:ring-red-100'
+      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-100',
+  ].join(' ');
 
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-gray-800">
         {label}
+        {required && (
+          <span className="ml-1 text-red-500" aria-hidden="true">
+            *
+          </span>
+        )}
       </span>
 
       {description && (
@@ -47,24 +61,36 @@ export default function PropertyField({
 
       {type === 'textarea' ? (
         <textarea
+          id={fieldId}
           value={value}
           placeholder={placeholder}
           onChange={handleChange}
-          onFocus={onFocus}
-          onBlur={onBlur}
           rows={4}
-          className="w-full resize-y rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
+          className={`${inputClassName} resize-y`}
         />
       ) : (
         <input
+          id={fieldId}
           type={type === 'url' ? 'url' : 'text'}
           value={value}
           placeholder={placeholder}
           onChange={handleChange}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
+          className={inputClassName}
         />
+      )}
+
+      {error && (
+        <p
+          id={errorId}
+          role="alert"
+          className="mt-1.5 text-xs text-red-600"
+        >
+          {error}
+        </p>
       )}
     </label>
   );

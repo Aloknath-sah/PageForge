@@ -8,19 +8,19 @@ import TestimonialsSection from '../components/sections/TestimonialsSection';
 import CtaSection from '../components/sections/CtaSection';
 
 import type {
-  CtaProps,
+  
   CtaSection as CtaSectionModel,
-  FeaturesProps,
+ 
   FeaturesSection as FeaturesSectionModel,
-  FaqProps,
+ 
   FaqSection as FaqSectionModel,
-  HeroProps,
+  
   HeroSection as HeroSectionModel,
   PageSection,
   SectionType,
-  TeamProps,
+  
   TeamSection as TeamSectionModel,
-  TestimonialsProps,
+  
   TestimonialsSection as TestimonialsSectionModel,
 } from '../domain/page-schema';
 

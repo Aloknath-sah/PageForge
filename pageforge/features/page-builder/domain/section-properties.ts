@@ -54,6 +54,7 @@ export type ScalarPropertyField<TProps> =
     type: ScalarPropertyType;
     placeholder?: string;
     description?: string;
+    required?: boolean;
   };
 
 export type CollectionPropertyField<TProps> =
@@ -128,6 +129,7 @@ export const sectionPropertyDefinitions = {
         type: 'text',
         placeholder:
           'Build something amazing',
+        required: true,
       },
 
       {
@@ -136,6 +138,7 @@ export const sectionPropertyDefinitions = {
         type: 'textarea',
         placeholder:
           'Explain what your product does.',
+         required: true,
       },
 
       {
@@ -144,6 +147,7 @@ export const sectionPropertyDefinitions = {
         type: 'text',
         placeholder:
           'Get Started',
+        required: true,
       },
 
       {

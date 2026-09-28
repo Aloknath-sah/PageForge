@@ -747,82 +747,46 @@ export const createPageEditorStore =
           );
         },
 
-        updateSectionField: (
-          sectionId,
-          field,
-          value,
-        ) => {
-          set(
-            (state) => {
-              const targetSection =
-                state.config.sections.find(
-                  (section) =>
-                    section.id ===
-                    sectionId,
-                );
+        updateSectionField: (sectionId, field, value) => {
+  set((state) => {
+    const targetSection = state.config.sections.find(
+      (section) => section.id === sectionId,
+    );
 
-              if (
-                !targetSection
-              ) {
-                return state;
-              }
+    if (!targetSection) {
+      return state;
+    }
 
-              if (
-                !Object.prototype.hasOwnProperty.call(
-                  targetSection.props,
-                  field,
-                )
-              ) {
-                return state;
-              }
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        targetSection.props,
+        field,
+      )
+    ) {
+      return state;
+    }
 
-              const currentValue =
-                (
-                  targetSection.props as Record<
-                    string,
-                    unknown
-                  >
-                )[field];
+    return {
+      config: {
+        ...state.config,
 
-              if (
-                Object.is(
-                  currentValue,
-                  value,
-                )
-              ) {
-                return state;
-              }
+        sections: state.config.sections.map((section) =>
+          section.id === sectionId
+            ? ({
+                ...section,
+                props: {
+                  ...section.props,
+                  [field]: value,
+                },
+              } as PageSection)
+            : section,
+        ),
+      },
 
-              const nextConfig: PageConfig =
-                {
-                  ...state.config,
-
-                  sections:
-                    state.config.sections.map(
-                      (section) =>
-                        section.id ===
-                        sectionId
-                          ? {
-                              ...section,
-
-                              props: {
-                                ...section.props,
-
-                                [field]:
-                                  value,
-                              },
-                            }
-                          : section,
-                    ),
-                };
-
-              return applyConfigChange(
-                state,
-                nextConfig,
-              );
-            },
-          );
-        },
+      isDirty: true,
+    };
+  });
+},
 
         addCollectionItem: (
           sectionId,

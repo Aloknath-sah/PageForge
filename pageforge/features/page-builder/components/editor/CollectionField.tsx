@@ -10,16 +10,21 @@ type CollectionItem = Record<string, unknown> & {
   id: string;
 };
 
+type CollectionEditorField = {
+  key: string;
+  label: string;
+  type: 'text' | 'textarea' | 'url';
+  placeholder?: string;
+  required?: boolean;
+};
+
 type CollectionFieldProps = {
   sectionId: string;
   collectionKey: string;
   label: string;
   itemLabel: string;
   items: CollectionItem[];
-  fields: CollectionItemField<any>[];
-  summaryField?: string;
-  minItems?: number;
-  maxItems?: number;
+  fields: CollectionEditorField[];
   createItem: () => CollectionItem;
 };
 
@@ -44,7 +49,7 @@ function getStringValue(
 }
 
 function getFieldError(
-  field: CollectionItemField<any>,
+  field: CollectionEditorField[],
   value: string,
 ): string | null {
   const trimmedValue = value.trim();
@@ -61,7 +66,7 @@ function getFieldError(
 
 function getItemErrors(
   item: CollectionItem,
-  fields: CollectionItemField<any>[],
+  fields: CollectionEditorField,
 ): Record<string, string> {
   const errors: Record<
     string,
@@ -94,7 +99,7 @@ function getItemErrors(
 
 function getInvalidItems(
   items: CollectionItem[],
-  fields: CollectionItemField<any>[],
+  fields: CollectionEditorField[],
 ): CollectionItem[] {
   return items.filter(
     (item) =>
@@ -525,20 +530,8 @@ type CollectionItemProps = {
   item: CollectionItem;
   index: number;
   itemLabel: string;
-  fields: CollectionItemField<any>[];
-  summaryField?: string;
-  expanded: boolean;
-  touchedFields: TouchedFields;
-  canDelete: boolean;
-  onToggle: () => void;
-  onFieldBlur: (
-    itemId: string,
-    fieldKey: string,
-  ) => void;
-  onFieldFocus: () => void;
-  onUpdate: (
-    patch: Record<string, unknown>,
-  ) => void;
+  fields: CollectionEditorField[];
+  onUpdate: (patch: Record<string, unknown>) => void;
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;

@@ -10,6 +10,8 @@ import { useEditorHistoryShortcuts } from '../../hooks/use-editor-history-shortc
 
 import { usePageEditorPersistence } from '../../hooks/use-page-editor-persistence';
 
+import { usePagePublishReadiness } from '../../hooks/use-page-publish-readiness';
+
 type PageBuilderProps = {
   pageId: string;
 };
@@ -47,6 +49,11 @@ export default function PageBuilder({
     pageId,
   );
 
+  const {
+    isReady,
+    errorCount,
+  } = usePagePublishReadiness();
+
   useEditorHistoryShortcuts({
     undo,
     redo,
@@ -66,6 +73,7 @@ export default function PageBuilder({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Undo / Redo */}
           <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1">
             <button
               type="button"
@@ -96,6 +104,7 @@ export default function PageBuilder({
             </button>
           </div>
 
+          {/* Save */}
           <button
             type="button"
             onClick={save}
@@ -108,6 +117,7 @@ export default function PageBuilder({
             Save
           </button>
 
+          {/* Existing draft save status */}
           <span
             className={[
               'rounded-full px-3 py-1 text-xs font-medium',
@@ -122,9 +132,28 @@ export default function PageBuilder({
                 ? 'Draft changes'
                 : 'All changes saved'}
           </span>
+
+          {/* Publish readiness - derived state only */}
+          <span
+            className={[
+              'rounded-full px-3 py-1 text-xs font-medium',
+              isReady
+                ? 'bg-green-50 text-green-700'
+                : 'bg-red-50 text-red-700',
+            ].join(' ')}
+          >
+            {isReady
+              ? 'Ready to publish'
+              : `${errorCount} ${
+                  errorCount === 1
+                    ? 'issue'
+                    : 'issues'
+                } to fix`}
+          </span>
         </div>
       </header>
 
+      {/* Save error */}
       {saveError && (
         <div
           className="border-b border-red-200 bg-red-50 px-5 py-2 text-xs text-red-700"

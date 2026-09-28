@@ -1,46 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import {
+  useState,
+} from 'react';
 
-import { DragDropProvider } from '@dnd-kit/react';
+import {
+  DragDropProvider,
+} from '@dnd-kit/react';
 
-import { isSortable } from '@dnd-kit/react/sortable';
+import {
+  isSortable,
+} from '@dnd-kit/react/sortable';
 
-import { usePageEditorStore } from '../../providers/page-editor-provider';
+import {
+  usePageEditorStore,
+} from '../../providers/page-editor-provider';
 
 import SortableSectionItem from './SortedSectionItem';
 
-import type { SectionType } from '../../domain/page-schema';
+import type {
+  SectionType,
+} from '../../domain/page-schema';
+
+import {
+  sectionRegistry,
+} from '../../registry/section-registry';
 
 const SECTION_OPTIONS: Array<{
   type: SectionType;
   label: string;
-}> = [
-  {
-    type: 'hero',
-    label: 'Hero',
-  },
-
-  {
-    type: 'features',
-    label: 'Features',
-  },
-
-  {
-    type: 'faq',
-    label: 'FAQ',
-  },
-
-  {
-    type: 'testimonials',
-    label: 'Testimonials',
-  },
-
-  {
-    type: 'cta',
-    label: 'CTA',
-  },
-];
+}> = (
+  Object.entries(
+    sectionRegistry,
+  ) as Array<
+    [
+      SectionType,
+      {
+        label: string;
+      },
+    ]
+  >
+).map(([type, definition]) => ({
+  type,
+  label: definition.label,
+}));
 
 export default function SectionList() {
   const [
@@ -89,15 +92,20 @@ export default function SectionList() {
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         <DragDropProvider
           onDragEnd={(event) => {
-            if (event.canceled) {
+            if (
+              event.canceled
+            ) {
               return;
             }
 
-            const { source } =
-              event.operation;
+            const {
+              source,
+            } = event.operation;
 
             if (
-              !isSortable(source)
+              !isSortable(
+                source,
+              )
             ) {
               return;
             }
@@ -108,7 +116,8 @@ export default function SectionList() {
             } = source;
 
             if (
-              initialIndex === index
+              initialIndex ===
+              index
             ) {
               return;
             }
@@ -126,8 +135,12 @@ export default function SectionList() {
                 index,
               ) => (
                 <SortableSectionItem
-                  key={section.id}
-                  section={section}
+                  key={
+                    section.id
+                  }
+                  section={
+                    section
+                  }
                   index={index}
                 />
               ),
@@ -158,7 +171,9 @@ export default function SectionList() {
                     }
                     className="w-full rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    {option.label}
+                    {
+                      option.label
+                    }
                   </button>
                 ),
               )}

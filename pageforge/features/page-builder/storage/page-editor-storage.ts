@@ -1,5 +1,10 @@
 import type { PageConfig } from '../domain/page-schema';
 
+import {
+  CURRENT_SCHEMA_VERSION,
+  migratePageConfig,
+} from '../domain/page-migrations';
+
 const STORAGE_PREFIX =
   'pageforge:page-editor';
 
@@ -13,9 +18,13 @@ function getStorageKey(
 
 function isRecord(
   value: unknown,
-): value is Record<string, unknown> {
+): value is Record<
+  string,
+  unknown
+> {
   return (
-    typeof value === 'object' &&
+    typeof value ===
+      'object' &&
     value !== null
   );
 }
@@ -29,7 +38,11 @@ function isPageConfig(
 
   if (
     typeof value.schemaVersion !==
-    'number'
+    'number' ||
+    !Number.isInteger(
+      value.schemaVersion,
+    ) ||
+    value.schemaVersion < 1
   ) {
     return false;
   }
@@ -76,7 +89,9 @@ export function loadPageConfig(
       JSON.parse(rawValue);
 
     if (
-      !isPageConfig(parsedValue)
+      !isPageConfig(
+        parsedValue,
+      )
     ) {
       console.warn(
         `Ignoring invalid persisted PageForge config for "${pageId}".`,
@@ -85,7 +100,29 @@ export function loadPageConfig(
       return null;
     }
 
-    return parsedValue;
+    const migratedConfig =
+      migratePageConfig(
+        parsedValue,
+      );
+
+    /*
+     * Persist the migrated configuration
+     * immediately so the same migration does
+     * not need to run on every future load.
+     */
+    if (
+      migratedConfig.schemaVersion !==
+      parsedValue.schemaVersion
+    ) {
+      window.localStorage.setItem(
+        getStorageKey(pageId),
+        JSON.stringify(
+          migratedConfig,
+        ),
+      );
+    }
+
+    return migratedConfig;
   } catch (error) {
     console.error(
       `Failed to load PageForge config for "${pageId}".`,
@@ -108,9 +145,29 @@ export function savePageConfig(
   }
 
   try {
+    const configToPersist =
+      migratePageConfig(
+        config,
+      );
+
+    /*
+     * Defensive check: anything written to storage
+     * must always be on the current schema version.
+     */
+    if (
+      configToPersist.schemaVersion !==
+      CURRENT_SCHEMA_VERSION
+    ) {
+      throw new Error(
+        `Cannot persist PageConfig schema version ${configToPersist.schemaVersion}. Expected ${CURRENT_SCHEMA_VERSION}.`,
+      );
+    }
+
     window.localStorage.setItem(
       getStorageKey(pageId),
-      JSON.stringify(config),
+      JSON.stringify(
+        configToPersist,
+      ),
     );
   } catch (error) {
     console.error(

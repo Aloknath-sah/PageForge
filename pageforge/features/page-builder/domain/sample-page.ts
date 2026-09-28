@@ -1,7 +1,12 @@
 import type { PageConfig } from './page-schema';
 
+import {
+  CURRENT_SCHEMA_VERSION,
+} from './page-migrations';
+
 export const samplePage: PageConfig = {
-  schemaVersion: 1,
+  schemaVersion:
+    CURRENT_SCHEMA_VERSION,
 
   seo: {
     title:
@@ -27,11 +32,15 @@ export const samplePage: PageConfig = {
       props: {
         title:
           'Build your business faster',
+
         description:
           'Build faster workflows without repetitive manual work.',
+
         primaryCtaText:
           'Get Started',
-        primaryCtaUrl: '/signup',
+
+        primaryCtaUrl:
+          '/signup',
       },
     },
 
@@ -42,12 +51,16 @@ export const samplePage: PageConfig = {
       props: {
         title:
           'Everything you need',
+
         description:
           'Powerful tools to automate your daily workflow.',
+
         items: [
           {
             id: 'feature-1',
-            title: 'Automate',
+            title:
+              'Automate',
+
             description:
               'Automate repetitive tasks and workflows.',
           },
@@ -56,13 +69,16 @@ export const samplePage: PageConfig = {
             id: 'feature-2',
             title:
               'Collaborate',
+
             description:
               'Work together from a single workspace.',
           },
 
           {
             id: 'feature-3',
-            title: 'Measure',
+            title:
+              'Measure',
+
             description:
               'Understand how your workflows perform.',
           },
@@ -81,24 +97,30 @@ export const samplePage: PageConfig = {
         items: [
           {
             id: 'faq-item-1',
+
             question:
               'What is PageForge?',
+
             answer:
               'PageForge is a visual page builder for creating and editing landing pages.',
           },
 
           {
             id: 'faq-item-2',
+
             question:
               'Can I customize my page?',
+
             answer:
               'Yes. You can edit section content directly from the settings panel.',
           },
 
           {
             id: 'faq-item-3',
+
             question:
               'Can I reorder sections?',
+
             answer:
               'Yes. Sections can be reordered directly from the section list.',
           },
@@ -117,10 +139,13 @@ export const samplePage: PageConfig = {
         items: [
           {
             id: 'testimonial-1',
+
             name:
               'Sarah Johnson',
+
             role:
               'Product Manager',
+
             quote:
               'We reduced repetitive work significantly.',
           },
@@ -135,11 +160,15 @@ export const samplePage: PageConfig = {
       props: {
         title:
           'Ready to get started?',
+
         description:
           'Create your first landing page in minutes.',
+
         buttonText:
           'Create Your Page',
-        buttonUrl: '/signup',
+
+        buttonUrl:
+          '/signup',
       },
     },
   ],

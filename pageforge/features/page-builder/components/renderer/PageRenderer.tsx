@@ -50,8 +50,7 @@ export default function PageRenderer({
     <main
       style={{
         backgroundColor:
-          config.theme
-            .backgroundColor,
+          config.theme.backgroundColor,
 
         color:
           config.theme.textColor,

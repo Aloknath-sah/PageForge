@@ -4,41 +4,38 @@ import PropertyField from './PropertyField';
 
 import { usePageEditorStore } from '../../providers/page-editor-provider';
 
-import { getSectionPropertyDefinition } from '../../domain/section-properties';
+import {
+  getSectionPropertyDefinition,
+} from '../../registry/section-registry';
 
 import CollectionField from './CollectionField';
 
 export default function SectionSettings() {
-  const selectedSection = usePageEditorStore((state) => {
-    const id = state.selectedSectionId;
+  const selectedSection =
+    usePageEditorStore(
+      (state) => {
+        const id =
+          state.selectedSectionId;
 
-    return (
-      state.config.sections.find(
-        (section) => section.id === id,
-      ) ?? null
+        return (
+          state.config.sections.find(
+            (section) =>
+              section.id === id,
+          ) ?? null
+        );
+      },
     );
-  });
 
   const updateSectionField =
     usePageEditorStore(
-      (state) => state.updateSectionField,
+      (state) =>
+        state.updateSectionField,
     );
 
   const setSectionEnabled =
     usePageEditorStore(
-      (state) => state.setSectionEnabled,
-    );
-
-  const beginHistoryTransaction =
-    usePageEditorStore(
       (state) =>
-        state.beginHistoryTransaction,
-    );
-
-  const endHistoryTransaction =
-    usePageEditorStore(
-      (state) =>
-        state.endHistoryTransaction,
+        state.setSectionEnabled,
     );
 
   if (!selectedSection) {
@@ -89,7 +86,9 @@ export default function SectionSettings() {
 
             <input
               type="checkbox"
-              checked={selectedSection.enabled}
+              checked={
+                selectedSection.enabled
+              }
               onChange={(event) =>
                 setSectionEnabled(
                   selectedSection.id,
@@ -103,104 +102,103 @@ export default function SectionSettings() {
 
           <div className="border-t border-gray-100 pt-6">
             <div className="space-y-5">
-              {definition.fields.map((field) => {
-                if (
-                  field.type ===
-                  'collection'
-                ) {
-                  const collectionValue =
+              {definition.fields.map(
+                (field) => {
+                  if (
+                    field.type ===
+                    'collection'
+                  ) {
+                    const collectionValue =
+                      selectedSection
+                        .props[field.key];
+
+                    return (
+                      <CollectionField
+                        key={String(
+                          field.key,
+                        )}
+                        sectionId={
+                          selectedSection.id
+                        }
+                        collectionKey={String(
+                          field.key,
+                        )}
+                        label={
+                          field.label
+                        }
+                        itemLabel={
+                          field.itemLabel
+                        }
+                        items={
+                          Array.isArray(
+                            collectionValue,
+                          )
+                            ? collectionValue
+                            : []
+                        }
+                        fields={
+                          field.fields
+                        }
+                        summaryField={
+                          field.summaryField
+                        }
+                        minItems={
+                          field.minItems
+                        }
+                        maxItems={
+                          field.maxItems
+                        }
+                        createItem={
+                          field.createItem
+                        }
+                      />
+                    );
+                  }
+
+                  const value =
                     selectedSection.props[
                       field.key
                     ];
 
                   return (
-                    <CollectionField
+                    <PropertyField
                       key={String(
                         field.key,
                       )}
-                      sectionId={
-                        selectedSection.id
+                      label={
+                        field.label
                       }
-                      collectionKey={String(
-                        field.key,
-                      )}
-                      label={field.label}
-                      itemLabel={
-                        field.itemLabel
+                      type={field.type}
+                      value={
+                        typeof value ===
+                        'string'
+                          ? value
+                          : ''
                       }
-                      items={
-                        Array.isArray(
-                          collectionValue,
+                      placeholder={
+                        field.placeholder
+                      }
+                      description={
+                        'description' in
+                        field
+                          ? field.description
+                          : undefined
+                      }
+                      onChange={(
+                        nextValue,
+                      ) =>
+                        updateSectionField(
+                          selectedSection.id,
+                          String(
+                            field.key,
+                          ),
+                          nextValue,
                         )
-                          ? collectionValue
-                          : []
-                      }
-                      fields={
-                        field.fields
-                      }
-                      summaryField={
-                        field.summaryField
-                      }
-                      minItems={
-                        field.minItems
-                      }
-                      maxItems={
-                        field.maxItems
-                      }
-                      createItem={
-                        field.createItem
                       }
                     />
                   );
-                }
-
-                const value =
-                  selectedSection.props[
-                    field.key
-                  ];
-
-                return (
-                  <PropertyField
-                    key={String(
-                      field.key,
-                    )}
-                    label={field.label}
-                    type={field.type}
-                    value={
-                      typeof value ===
-                      'string'
-                        ? value
-                        : ''
-                    }
-                    placeholder={
-                      field.placeholder
-                    }
-                    description={
-                      'description' in
-                      field
-                        ? field.description
-                        : undefined
-                    }
-                    onFocus={
-                      beginHistoryTransaction
-                    }
-                    onBlur={
-                      endHistoryTransaction
-                    }
-                    onChange={(
-                      nextValue,
-                    ) =>
-                      updateSectionField(
-                        selectedSection.id,
-                        String(
-                          field.key,
-                        ),
-                        nextValue,
-                      )
-                    }
-                  />
-                );
-              })}
+                },
+              )}
             </div>
           </div>
         </div>

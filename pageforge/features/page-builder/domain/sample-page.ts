@@ -18,17 +18,24 @@ export const samplePage: PageConfig = {
 
   theme: {
     primaryColor: '#2563eb',
+
     backgroundColor: '#ffffff',
+
     textColor: '#111827',
+
     fontFamily: 'Inter',
+
     borderRadius: 'medium',
   },
 
   sections: [
     {
       id: 'hero-1',
+
       type: 'hero',
+
       enabled: true,
+
       props: {
         title:
           'Build your business faster',
@@ -46,8 +53,11 @@ export const samplePage: PageConfig = {
 
     {
       id: 'features-1',
+
       type: 'features',
+
       enabled: true,
+
       props: {
         title:
           'Everything you need',
@@ -58,6 +68,7 @@ export const samplePage: PageConfig = {
         items: [
           {
             id: 'feature-1',
+
             title:
               'Automate',
 
@@ -67,6 +78,7 @@ export const samplePage: PageConfig = {
 
           {
             id: 'feature-2',
+
             title:
               'Collaborate',
 
@@ -76,6 +88,7 @@ export const samplePage: PageConfig = {
 
           {
             id: 'feature-3',
+
             title:
               'Measure',
 
@@ -88,8 +101,11 @@ export const samplePage: PageConfig = {
 
     {
       id: 'faq-1',
+
       type: 'faq',
+
       enabled: true,
+
       props: {
         title:
           'Frequently asked questions',
@@ -129,9 +145,69 @@ export const samplePage: PageConfig = {
     },
 
     {
-      id: 'testimonials-1',
-      type: 'testimonials',
+      id: 'team-1',
+
+      type: 'team',
+
       enabled: true,
+
+      props: {
+        title:
+          'Meet the team',
+
+        description:
+          'The people behind Acme AI.',
+
+        items: [
+          {
+            id: 'team-member-1',
+
+            name:
+              'Alex Morgan',
+
+            role:
+              'Co-Founder',
+
+            bio:
+              'Builds the product and helps shape the company vision.',
+          },
+
+          {
+            id: 'team-member-2',
+
+            name:
+              'Jamie Lee',
+
+            role:
+              'Product Designer',
+
+            bio:
+              'Creates thoughtful experiences for every customer.',
+          },
+
+          {
+            id: 'team-member-3',
+
+            name:
+              'Taylor Smith',
+
+            role:
+              'Engineer',
+
+            bio:
+              'Turns product ideas into reliable software.',
+          },
+        ],
+      },
+    },
+
+    {
+      id: 'testimonials-1',
+
+      type: 'testimonials',
+
+      enabled: true,
+
       props: {
         title:
           'Loved by teams',
@@ -155,8 +231,11 @@ export const samplePage: PageConfig = {
 
     {
       id: 'cta-1',
+
       type: 'cta',
+
       enabled: true,
+
       props: {
         title:
           'Ready to get started?',

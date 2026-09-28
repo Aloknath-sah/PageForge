@@ -2,6 +2,7 @@ export const SECTION_TYPES = [
   'hero',
   'features',
   'faq',
+  'team',
   'testimonials',
   'cta',
 ] as const;
@@ -41,6 +42,20 @@ export type FaqProps = {
   items: FaqItem[];
 };
 
+export type TeamMemberItem = {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  avatarUrl?: string;
+};
+
+export type TeamProps = {
+  title: string;
+  description?: string;
+  items: TeamMemberItem[];
+};
+
 export type TestimonialItem = {
   id: string;
   name: string;
@@ -71,20 +86,20 @@ type BaseSection<
   props: TProps;
 };
 
-export type HeroSection = BaseSection<
-  'hero',
-  HeroProps
->;
+export type HeroSection =
+  BaseSection<'hero', HeroProps>;
 
-export type FeaturesSection = BaseSection<
-  'features',
-  FeaturesProps
->;
+export type FeaturesSection =
+  BaseSection<
+    'features',
+    FeaturesProps
+  >;
 
-export type FaqSection = BaseSection<
-  'faq',
-  FaqProps
->;
+export type FaqSection =
+  BaseSection<'faq', FaqProps>;
+
+export type TeamSection =
+  BaseSection<'team', TeamProps>;
 
 export type TestimonialsSection =
   BaseSection<
@@ -92,15 +107,14 @@ export type TestimonialsSection =
     TestimonialsProps
   >;
 
-export type CtaSection = BaseSection<
-  'cta',
-  CtaProps
->;
+export type CtaSection =
+  BaseSection<'cta', CtaProps>;
 
 export type PageSection =
   | HeroSection
   | FeaturesSection
   | FaqSection
+  | TeamSection
   | TestimonialsSection
   | CtaSection;
 

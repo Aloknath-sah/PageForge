@@ -116,7 +116,9 @@ export default function SortableSectionItem({
 
   return (
     <div
-      ref={sortable.ref}
+      ref={
+        sortable.ref
+      }
       className={[
         'group rounded-lg border bg-white transition',
         selected
@@ -139,8 +141,7 @@ export default function SortableSectionItem({
           if (
             event.key ===
               'Enter' ||
-            event.key ===
-              ' '
+            event.key === ' '
           ) {
             event.preventDefault();
 

@@ -3,6 +3,7 @@ import type {
   FaqProps,
   FeaturesProps,
   HeroProps,
+  TeamProps,
   TestimonialsProps,
 } from './page-schema';
 
@@ -106,6 +107,8 @@ type SectionPropertyDefinitionMap = {
 
   faq: SectionPropertyDefinition<FaqProps>;
 
+  team: SectionPropertyDefinition<TeamProps>;
+
   testimonials: SectionPropertyDefinition<TestimonialsProps>;
 
   cta: SectionPropertyDefinition<CtaProps>;
@@ -191,9 +194,13 @@ export const sectionPropertyDefinitions = {
 
         createItem: () => ({
           id: crypto.randomUUID(),
-          title: 'New Feature',
+
+          title:
+            'New Feature',
+
           description:
             'Describe this feature.',
+
           icon: '',
         }),
 
@@ -250,7 +257,8 @@ export const sectionPropertyDefinitions = {
 
         itemLabel: 'Question',
 
-        summaryField: 'question',
+        summaryField:
+          'question',
 
         minItems: 1,
 
@@ -258,8 +266,10 @@ export const sectionPropertyDefinitions = {
 
         createItem: () => ({
           id: crypto.randomUUID(),
+
           question:
             'New question',
+
           answer:
             'Provide an answer.',
         }),
@@ -287,6 +297,98 @@ export const sectionPropertyDefinitions = {
     ],
   },
 
+  team: {
+    label: 'Team',
+
+    description:
+      'Introduce the people behind your product.',
+
+    fields: [
+      {
+        key: 'title',
+        label: 'Title',
+        type: 'text',
+        placeholder:
+          'Meet the team',
+      },
+
+      {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder:
+          'Introduce your team.',
+      },
+
+      {
+        key: 'items',
+        label: 'Team Members',
+        type: 'collection',
+
+        itemLabel: 'Team Member',
+
+        summaryField:
+          'name',
+
+        minItems: 1,
+
+        maxItems: 8,
+
+        createItem: () => ({
+          id: crypto.randomUUID(),
+
+          name:
+            'New Team Member',
+
+          role:
+            'Role',
+
+          bio:
+            'Tell visitors what this person does.',
+
+          avatarUrl: '',
+        }),
+
+        fields: [
+          {
+            key: 'name',
+            label: 'Name',
+            type: 'text',
+            placeholder:
+              'Team member name',
+            required: true,
+          },
+
+          {
+            key: 'role',
+            label: 'Role',
+            type: 'text',
+            placeholder:
+              'Team member role',
+            required: true,
+          },
+
+          {
+            key: 'bio',
+            label: 'Bio',
+            type: 'textarea',
+            placeholder:
+              'Short team member bio',
+            required: true,
+          },
+
+          {
+            key: 'avatarUrl',
+            label: 'Avatar URL',
+            type: 'url',
+            placeholder:
+              'https://example.com/avatar.jpg',
+          },
+        ],
+      },
+    ],
+  },
+
   testimonials: {
     label: 'Testimonials',
 
@@ -307,7 +409,8 @@ export const sectionPropertyDefinitions = {
         label: 'Testimonials',
         type: 'collection',
 
-        itemLabel: 'Testimonial',
+        itemLabel:
+          'Testimonial',
 
         summaryField: 'name',
 
@@ -317,10 +420,15 @@ export const sectionPropertyDefinitions = {
 
         createItem: () => ({
           id: crypto.randomUUID(),
-          name: 'New Customer',
+
+          name:
+            'New Customer',
+
           role: 'Role',
+
           quote:
             'Customer feedback goes here.',
+
           avatarUrl: '',
         }),
 
@@ -400,5 +508,7 @@ export const sectionPropertyDefinitions = {
 export function getSectionPropertyDefinition(
   type: keyof SectionPropertyDefinitionMap,
 ) {
-  return sectionPropertyDefinitions[type];
+  return sectionPropertyDefinitions[
+    type
+  ];
 }

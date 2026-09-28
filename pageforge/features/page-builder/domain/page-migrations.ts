@@ -1,6 +1,6 @@
 import type { PageConfig } from './page-schema';
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 type PageMigration = (
   config: PageConfig,
@@ -9,18 +9,26 @@ type PageMigration = (
 const migrateV1ToV2: PageMigration = (
   config,
 ) => {
+  return {
+    ...config,
+
+    schemaVersion: 2,
+  };
+};
+
+const migrateV2ToV3: PageMigration = (
+  config,
+) => {
   /*
-   * Version 2 introduced the FAQ section and
-   * expanded the section registry, but existing
-   * pages do not need new content inserted.
+   * Version 3 introduces the Team section.
    *
-   * This migration therefore preserves all existing
-   * page content and only advances the schema
-   * version.
+   * Existing pages do not need any data
+   * transformation because Team is additive.
    */
   return {
     ...config,
-    schemaVersion: 2,
+
+    schemaVersion: 3,
   };
 };
 
@@ -29,6 +37,8 @@ const MIGRATIONS: Record<
   PageMigration
 > = {
   1: migrateV1ToV2,
+
+  2: migrateV2ToV3,
 };
 
 export function migratePageConfig(
@@ -43,9 +53,8 @@ export function migratePageConfig(
     );
   }
 
-  let migratedConfig = structuredClone(
-    config,
-  );
+  let migratedConfig =
+    structuredClone(config);
 
   while (
     migratedConfig.schemaVersion <
@@ -63,7 +72,9 @@ export function migratePageConfig(
     }
 
     migratedConfig =
-      migration(migratedConfig);
+      migration(
+        migratedConfig,
+      );
   }
 
   return migratedConfig;

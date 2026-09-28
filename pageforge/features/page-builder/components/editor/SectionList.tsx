@@ -26,24 +26,21 @@ import {
   sectionRegistry,
 } from '../../registry/section-registry';
 
-const SECTION_OPTIONS: Array<{
-  type: SectionType;
-  label: string;
-}> = (
-  Object.entries(
+const SECTION_OPTIONS =
+  Object.values(
     sectionRegistry,
-  ) as Array<
-    [
-      SectionType,
-      {
-        label: string;
-      },
-    ]
-  >
-).map(([type, definition]) => ({
-  type,
-  label: definition.label,
-}));
+  ).map(
+    (sectionModule) => ({
+      type: sectionModule.type,
+      label:
+        sectionModule
+          .propertyDefinition
+          .label,
+    }),
+  ) satisfies Array<{
+    type: SectionType;
+    label: string;
+  }>;
 
 export default function SectionList() {
   const [

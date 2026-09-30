@@ -42,6 +42,12 @@ export type PublishPageInput = {
   config: PageConfig;
 };
 
+export type PublishedPageRecord = {
+  id: string;
+  slug: string;
+  published_config: PageConfig;
+};
+
 export class PageRepositoryError extends Error {
   constructor(
     message: string,
@@ -212,6 +218,31 @@ export function createPageRepository(
   return data as PageRecord;
 }
 
+async function getPublishedBySlug(
+  slug: string,
+): Promise<PublishedPageRecord | null> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .rpc(
+      'get_published_page_by_slug',
+      {
+        p_slug: slug,
+      },
+    )
+    .maybeSingle();
+
+  if (error) {
+    throw new PageRepositoryError(
+      'Unable to load published page.',
+      error,
+    );
+  }
+
+  return data as PublishedPageRecord | null;
+}
+
   async function updateMetadata(
     input: UpdatePageMetadataInput,
   ): Promise<PageRecord> {
@@ -258,6 +289,7 @@ export function createPageRepository(
   return {
     getById,
     getBySlug,
+    getPublishedBySlug,
     listByUser,
     create,
     updateDraft,

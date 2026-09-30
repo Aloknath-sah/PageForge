@@ -1,5 +1,5 @@
 'use client';
-
+import { useState } from 'react';
 import SectionList from './SectionList';
 import EditablePreview from './EditablePreview';
 import SectionSettings from './SectionSettings';
@@ -42,9 +42,11 @@ export default function PageBuilder({
   );
 
   const {
-    isHydrated,
-    save,
-    saveError,
+     isHydrated,
+  save,
+  publish,
+  isPublishing,
+  saveError,
   } = usePageEditorPersistence(
     pageId,
   );
@@ -58,6 +60,27 @@ export default function PageBuilder({
     undo,
     redo,
   });
+
+  const [
+  publishMessage,
+  setPublishMessage,
+] = useState<string | null>(
+  null,
+);
+
+const handlePublish =
+  async () => {
+    setPublishMessage(null);
+
+    const success =
+      await publish();
+
+    if (success) {
+      setPublishMessage(
+        'Page published successfully.',
+      );
+    }
+  };
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-100">
@@ -117,6 +140,28 @@ export default function PageBuilder({
             Save
           </button>
 
+          <button
+  type="button"
+  onClick={handlePublish}
+  disabled={
+    !isReady ||
+    !isHydrated ||
+    isPublishing
+  }
+  title={
+    !isReady
+      ? `Fix ${errorCount} validation error${
+          errorCount === 1 ? '' : 's'
+        } before publishing`
+      : 'Publish current draft'
+  }
+  className="rounded-lg bg-gray-950 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+>
+  {isPublishing
+    ? 'Publishing...'
+    : 'Publish'}
+</button>
+
           {/* Existing draft save status */}
           <span
             className={[
@@ -162,6 +207,15 @@ export default function PageBuilder({
           {saveError}
         </div>
       )}
+
+      {publishMessage && (
+  <div
+    className="border-b border-green-200 bg-green-50 px-5 py-2 text-xs text-green-700"
+    role="status"
+  >
+    {publishMessage}
+  </div>
+)}
 
       <div className="flex min-h-0 flex-1">
         <SectionList />

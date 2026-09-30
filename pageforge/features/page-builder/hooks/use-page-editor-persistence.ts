@@ -13,161 +13,93 @@ import {
 
 import { usePageEditorStore } from '../providers/page-editor-provider';
 
-import { createClient } from '../../../lib/supabase/client';
-
-import {
-  createPageRepository,
-} from '../../../lib/pages/page-repository';
-
-function isUuid(
-  value: string,
-) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value,
-  );
-}
-
 export function usePageEditorPersistence(
   pageId: string,
 ) {
-  const config =
-    usePageEditorStore(
-      (state) => state.config,
-    );
+  const config = usePageEditorStore(
+    (state) => state.config,
+  );
 
-  const hydrateConfig =
-    usePageEditorStore(
-      (state) =>
-        state.hydrateConfig,
-    );
+  const hydrateConfig = usePageEditorStore(
+    (state) => state.hydrateConfig,
+  );
 
-  const markSaved =
-    usePageEditorStore(
-      (state) => state.markSaved,
-    );
+  const markSaved = usePageEditorStore(
+    (state) => state.markSaved,
+  );
 
-  const [
-    hydratedPageId,
-    setHydratedPageId,
-  ] =
-    useState<string | null>(
-      null,
-    );
+  const [hydratedPageId, setHydratedPageId] =
+    useState<string | null>(null);
+
+  const [saveError, setSaveError] =
+    useState<string | null>(null);
+
+  const [isSaving, setIsSaving] =
+    useState(false);
+
+  const [isPublishing, setIsPublishing] =
+    useState(false);
 
   const isHydrated =
     hydratedPageId === pageId;
 
-  const [
-    saveError,
-    setSaveError,
-  ] =
-    useState<string | null>(
-      null,
-    );
-
-  const [
-    isPublishing,
-    setIsPublishing,
-  ] =
-    useState(false);
-
   useEffect(() => {
     let cancelled = false;
 
-    async function hydrate() {
+    async function loadDraft() {
       setHydratedPageId(null);
       setSaveError(null);
 
-      // Preserve existing local-storage
-      // behavior for legacy/non-UUID pages.
-      const localConfig =
-        loadPageConfig(pageId);
-
       try {
-        if (isUuid(pageId)) {
-          const supabase =
-            createClient();
-
-          const {
-            data: {
-              user,
-            },
-          } =
-            await supabase.auth.getUser();
-
-          if (user) {
-            const repository =
-              createPageRepository(
-                supabase,
-              );
-
-            const remotePage =
-              await repository.getById(
-                pageId,
-              );
-
-            if (
-              remotePage &&
-              remotePage.draft_config
-            ) {
-              if (!cancelled) {
-                hydrateConfig(
-                  remotePage.draft_config,
-                );
-
-                savePageConfig(
-                  pageId,
-                  remotePage.draft_config,
-                );
-              }
-
-              return;
-            }
-          }
-        }
-
-        // Fallback to the existing local
-        // persistence mechanism.
-        if (
-          localConfig &&
-          !cancelled
-        ) {
-          hydrateConfig(
-            localConfig,
-          );
-        }
-      } catch (error) {
-        console.error(
-          'Unable to hydrate page from Supabase:',
-          error,
+        const response = await fetch(
+          `/api/pages/${pageId}`,
+          {
+            method: 'GET',
+            cache: 'no-store',
+          },
         );
 
-        // Preserve local data when
-        // cloud hydration fails.
-        if (
-          localConfig &&
-          !cancelled
-        ) {
-          hydrateConfig(
-            localConfig,
+        if (!response.ok) {
+          throw new Error(
+            'Unable to load page from server.',
           );
         }
 
-        if (!cancelled) {
-          setSaveError(
-            'Unable to load the cloud draft. Using the local draft.',
+        const body = await response.json();
+
+        if (
+          cancelled ||
+          !body?.page?.draft_config
+        ) {
+          return;
+        }
+
+        hydrateConfig(
+          body.page.draft_config,
+        );
+      } catch {
+        /*
+         * Preserve the existing local fallback.
+         */
+        const persistedConfig =
+          loadPageConfig(pageId);
+
+        if (
+          !cancelled &&
+          persistedConfig
+        ) {
+          hydrateConfig(
+            persistedConfig,
           );
         }
       } finally {
         if (!cancelled) {
-          setHydratedPageId(
-            pageId,
-          );
+          setHydratedPageId(pageId);
         }
       }
     }
 
-    hydrate();
+    loadDraft();
 
     return () => {
       cancelled = true;
@@ -177,153 +109,243 @@ export function usePageEditorPersistence(
     hydrateConfig,
   ]);
 
-  const save =
-    useCallback(
-      async (): Promise<boolean> => {
-        try {
-          // Always keep the existing local
-          // persistence behavior.
-          savePageConfig(
-            pageId,
-            config,
-          );
+  const save = useCallback(async () => {
+    if (!isHydrated || isSaving) {
+      return false;
+    }
 
-          if (isUuid(pageId)) {
-            const supabase =
-              createClient();
+    setIsSaving(true);
+    setSaveError(null);
 
-            const {
-              data: {
-                user,
-              },
-            } =
-              await supabase.auth.getUser();
-
-            if (!user) {
-              throw new Error(
-                'Your session has expired.',
-              );
-            }
-
-            const repository =
-              createPageRepository(
-                supabase,
-              );
-
-            await repository.updateDraft({
-              pageId,
-              config,
-            });
-          }
-
-          markSaved();
-
-          setSaveError(null);
-
-          return true;
-        } catch (error) {
-          console.error(
-            'Unable to save page:',
-            error,
-          );
-
-          setSaveError(
-            error instanceof Error
-              ? error.message
-              : 'Unable to save this page.',
-          );
-
-          return false;
-        }
-      },
-      [
+    /*
+     * Keep local persistence as a fallback/cache.
+     */
+    try {
+      savePageConfig(
         pageId,
         config,
-        markSaved,
-      ],
-    );
+      );
+    } catch {
+      /*
+       * Local storage failure should not stop
+       * the server persistence attempt.
+       */
+    }
 
-  const publish =
-    useCallback(
-      async (): Promise<boolean> => {
-        if (!isUuid(pageId)) {
-          setSaveError(
-            'Only database-backed pages can be published.',
-          );
-
-          return false;
-        }
-
-        try {
-          setIsPublishing(true);
-          setSaveError(null);
-
-          const response =
-            await fetch(
-              `/api/pages/${pageId}/publish`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type':
-                    'application/json',
-                },
-                body: JSON.stringify({
-                  config,
-                }),
-              },
-            );
-
-          const result =
-            (await response.json()) as {
-              error?: string;
-            };
-
-          if (!response.ok) {
-            throw new Error(
-              result.error ||
-                'Unable to publish page.',
-            );
-          }
-
-          // Keep the existing local
-          // persistence mirror in sync.
-          savePageConfig(
-            pageId,
+    try {
+      const response = await fetch(
+        `/api/pages/${pageId}/draft`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+          body: JSON.stringify({
             config,
-          );
+          }),
+        },
+      );
 
-          markSaved();
+      const body =
+        await response
+          .json()
+          .catch(() => null);
 
-          return true;
-        } catch (error) {
-          console.error(
-            'Unable to publish page:',
-            error,
-          );
+      if (!response.ok) {
+        throw new Error(
+          body?.error ??
+            'Unable to save draft.',
+        );
+      }
 
-          setSaveError(
-            error instanceof Error
-              ? error.message
-              : 'Unable to publish page.',
-          );
+      markSaved();
 
-          return false;
-        } finally {
-          setIsPublishing(false);
-        }
-      },
-      [
-        pageId,
-        config,
-        markSaved,
-      ],
-    );
+      return true;
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to save draft.',
+      );
+
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    pageId,
+    config,
+    isHydrated,
+    isSaving,
+    markSaved,
+  ]);
+
+  const publish = useCallback(async () => {
+    if (
+      !isHydrated ||
+      isPublishing
+    ) {
+      return false;
+    }
+
+    setIsPublishing(true);
+    setSaveError(null);
+
+    try {
+      /*
+       * Publish the current editor configuration.
+       *
+       * The server is responsible for:
+       * - authentication
+       * - ownership checks
+       * - publish validation
+       * - updating published_config
+       * - creating the version snapshot
+       */
+      const response = await fetch(
+        `/api/pages/${pageId}/publish`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+          body: JSON.stringify({
+            config,
+          }),
+        },
+      );
+
+      const body =
+        await response
+          .json()
+          .catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          body?.error ??
+            'Unable to publish page.',
+        );
+      }
+
+      /*
+       * Publishing also makes the current
+       * editor configuration persisted.
+       */
+      try {
+        savePageConfig(
+          pageId,
+          config,
+        );
+      } catch {
+        /*
+         * Local persistence is only a fallback.
+         * Server publish already succeeded.
+         */
+      }
+
+      markSaved();
+
+      return true;
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to publish page.',
+      );
+
+      return false;
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [
+    pageId,
+    config,
+    isHydrated,
+    isPublishing,
+    markSaved,
+  ]);
+
+  const restoreVersion = useCallback(
+  async (version: number) => {
+    if (!isHydrated || isSaving || isPublishing) {
+      return false;
+    }
+
+    setSaveError(null);
+
+    try {
+      const response = await fetch(
+        `/api/pages/${pageId}/restore`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            version,
+          }),
+        },
+      );
+
+      const body = await response
+        .json()
+        .catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          body?.error ??
+            'Unable to restore this version.',
+        );
+      }
+
+      if (!body?.config) {
+        throw new Error(
+          'Restored version did not contain a page configuration.',
+        );
+      }
+
+      hydrateConfig(body.config);
+      markSaved();
+
+      try {
+        savePageConfig(
+          pageId,
+          body.config,
+        );
+      } catch {
+        /* local fallback only */
+      }
+
+      return true;
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to restore this version.',
+      );
+
+      return false;
+    }
+  },
+  [
+    pageId,
+    isHydrated,
+    isSaving,
+    isPublishing,
+    hydrateConfig,
+    markSaved,
+  ],
+);
 
   return {
     isHydrated,
+    isSaving,
+    isPublishing,
     save,
     publish,
-    isPublishing,
+    restoreVersion,
     saveError,
   };
 }

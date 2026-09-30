@@ -112,15 +112,18 @@ export async function POST(
       });
 
     return NextResponse.json({
-      success: true,
-      page: {
-        id: publishedPage.id,
-        status:
-          publishedPage.status,
-        published_at:
-          publishedPage.published_at,
-      },
-    });
+  success: true,
+  page: {
+    id:
+      publishedPage.pageId,
+    status:
+      'published',
+    published_at:
+      publishedPage.publishedAt,
+  },
+  version:
+    publishedPage.version,
+});
   } catch (error) {
     console.error(
       'Publish route error:',

@@ -106,6 +106,61 @@ export function createPageRepository(
     return data as PageRecord | null;
   }
 
+  async function listVersions(
+  pageId: string,
+): Promise<
+  Array<{
+    id: string;
+    page_id: string;
+    version: number;
+    config: PageConfig;
+    created_at: string;
+    created_by: string | null;
+  }>
+> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('page_versions')
+    .select(
+      `
+        id,
+        page_id,
+        version,
+        config,
+        created_at,
+        created_by
+      `,
+    )
+    .eq(
+      'page_id',
+      pageId,
+    )
+    .order(
+      'version',
+      {
+        ascending: false,
+      },
+    );
+
+  if (error) {
+    throw new PageRepositoryError(
+      'Unable to load page versions.',
+      error,
+    );
+  }
+
+  return (data ?? []) as Array<{
+    id: string;
+    page_id: string;
+    version: number;
+    config: PageConfig;
+    created_at: string;
+    created_by: string | null;
+  }>;
+}
+
   async function listByUser(
     userId: string,
   ): Promise<PageRecord[]> {
@@ -186,26 +241,23 @@ export function createPageRepository(
     return data as PageRecord;
   }
 
-  async function publish(
+async function publish(
   input: PublishPageInput,
-): Promise<PageRecord> {
-  const publishedAt =
-    new Date().toISOString();
-
+): Promise<{
+  pageId: string;
+  version: number;
+  publishedAt: string;
+}> {
   const {
     data,
     error,
   } = await supabase
-    .from('pages')
-    .update({
-      draft_config: input.config,
-      published_config: input.config,
-      status: 'published',
-      published_at: publishedAt,
-      updated_at: publishedAt,
+    .rpc('publish_page', {
+      p_page_id:
+        input.pageId,
+      p_config:
+        input.config,
     })
-    .eq('id', input.pageId)
-    .select('*')
     .single();
 
   if (error) {
@@ -215,7 +267,12 @@ export function createPageRepository(
     );
   }
 
-  return data as PageRecord;
+  return {
+    pageId: data.page_id,
+    version: data.version,
+    publishedAt:
+      data.published_at,
+  };
 }
 
 async function getPublishedBySlug(
@@ -291,6 +348,7 @@ async function getPublishedBySlug(
     getBySlug,
     getPublishedBySlug,
     listByUser,
+    listVersions,
     create,
     updateDraft,
     updateMetadata,

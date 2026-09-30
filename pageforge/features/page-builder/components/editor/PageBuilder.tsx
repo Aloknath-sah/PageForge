@@ -3,9 +3,8 @@ import { useState } from 'react';
 import SectionList from './SectionList';
 import EditablePreview from './EditablePreview';
 import SectionSettings from './SectionSettings';
-
+import VersionHistoryPanel from './VersionHistoryPanel';
 import { usePageEditorStore } from '../../providers/page-editor-provider';
-
 import { useEditorHistoryShortcuts } from '../../hooks/use-editor-history-shortcuts';
 
 import { usePageEditorPersistence } from '../../hooks/use-page-editor-persistence';
@@ -56,6 +55,12 @@ export default function PageBuilder({
     errorCount,
   } = usePagePublishReadiness();
 
+  const {
+  restoreVersion,
+} = usePageEditorPersistence(
+  pageId,
+);
+
   useEditorHistoryShortcuts({
     undo,
     redo,
@@ -67,6 +72,9 @@ export default function PageBuilder({
 ] = useState<string | null>(
   null,
 );
+
+const [showVersionHistory, setShowVersionHistory] =
+  useState(false);
 
 const handlePublish =
   async () => {
@@ -139,6 +147,14 @@ const handlePublish =
           >
             Save
           </button>
+
+          <button
+  type="button"
+  onClick={() => setShowVersionHistory(true)}
+  className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-950"
+>
+  Version History
+</button>
 
           <button
   type="button"
@@ -226,6 +242,13 @@ const handlePublish =
 
         <SectionSettings />
       </div>
+
+      <VersionHistoryPanel
+  pageId={pageId}
+  open={showVersionHistory}
+  onClose={() => setShowVersionHistory(false)}
+  restoreVersion={restoreVersion}
+/>
     </div>
   );
 }

@@ -41,11 +41,12 @@ export default function PageBuilder({
   );
 
   const {
-     isHydrated,
-  save,
-  publish,
-  isPublishing,
-  saveError,
+    isHydrated,
+    save,
+    publish,
+    isPublishing,
+    saveError,
+    restoreVersion,
   } = usePageEditorPersistence(
     pageId,
   );
@@ -54,12 +55,6 @@ export default function PageBuilder({
     isReady,
     errorCount,
   } = usePagePublishReadiness();
-
-  const {
-  restoreVersion,
-} = usePageEditorPersistence(
-  pageId,
-);
 
   useEditorHistoryShortcuts({
     undo,

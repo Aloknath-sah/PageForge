@@ -1,38 +1,92 @@
+// features/page-builder/components/editor/SectionSettings.tsx
+
 'use client';
 
 import PropertyField from './PropertyField';
 import CollectionField from './CollectionField';
 
-import { usePageEditorStore } from '../../providers/page-editor-provider';
+import { useShallow } from 'zustand/react/shallow';
+
+import {
+  usePageEditorStore,
+} from '../../providers/page-editor-provider';
 
 import {
   getSectionPropertyDefinition,
 } from '../../domain/section-properties';
 
-import { validatePageConfig } from '../../domain/page-validation';
+import {
+  validatePageConfig,
+} from '../../domain/page-validation';
 
 export default function SectionSettings() {
-  const config = usePageEditorStore(
-    (state) => state.config,
+  const {
+    selectedSection,
+    fieldErrors,
+  } = usePageEditorStore(
+    useShallow((state) => {
+      const id =
+        state.selectedSectionId;
+
+      const selectedSection =
+        state.config.sections.find(
+          (section) =>
+            section.id === id,
+        ) ?? null;
+
+      if (!selectedSection) {
+        return {
+          selectedSection: null,
+          fieldErrors:
+            {} as Record<
+              string,
+              string | undefined
+            >,
+        };
+      }
+
+      const validationResult =
+        validatePageConfig(
+          state.config,
+        );
+
+      const fieldErrors: Record<
+        string,
+        string | undefined
+      > = {};
+
+      for (const error of validationResult.errors) {
+        if (
+          error.sectionId ===
+            selectedSection.id &&
+          error.fieldKey &&
+          !error.collectionKey &&
+          !error.itemId
+        ) {
+          fieldErrors[
+            error.fieldKey
+          ] = error.message;
+        }
+      }
+
+      return {
+        selectedSection,
+        fieldErrors,
+      };
+    }),
   );
 
-  const selectedSection = usePageEditorStore((state) => {
-    const id = state.selectedSectionId;
-
-    return (
-      state.config.sections.find(
-        (section) => section.id === id,
-      ) ?? null
+  const updateSectionField =
+    usePageEditorStore(
+      (state) =>
+        state.updateSectionField,
     );
-  });
 
-  const updateSectionField = usePageEditorStore(
-    (state) => state.updateSectionField,
-  );
-
-  const setSectionEnabled = usePageEditorStore(
-    (state) => state.setSectionEnabled,
-  );
+  const setSectionEnabled =
+    usePageEditorStore(
+      (state) =>
+        state.setSectionEnabled,
+    );
 
   if (!selectedSection) {
     return (
@@ -45,23 +99,15 @@ export default function SectionSettings() {
   }
 
   const definition =
-    getSectionPropertyDefinition(selectedSection.type);
-
-  const validationResult =
-    validatePageConfig(config);
+    getSectionPropertyDefinition(
+      selectedSection.type,
+    );
 
   const props =
-    selectedSection.props as Record<string, unknown>;
-
-  const getFieldError = (fieldKey: string) => {
-    return validationResult.errors.find(
-      (error) =>
-        error.sectionId === selectedSection.id &&
-        error.fieldKey === fieldKey &&
-        !error.collectionKey &&
-        !error.itemId,
-    )?.message;
-  };
+    selectedSection.props as Record<
+      string,
+      unknown
+    >;
 
   return (
     <aside className="flex w-80 shrink-0 flex-col border-l border-gray-200 bg-white">
@@ -96,7 +142,9 @@ export default function SectionSettings() {
 
             <input
               type="checkbox"
-              checked={selectedSection.enabled}
+              checked={
+                selectedSection.enabled
+              }
               onChange={(event) =>
                 setSectionEnabled(
                   selectedSection.id,
@@ -110,84 +158,142 @@ export default function SectionSettings() {
 
           <div className="border-t border-gray-100 pt-6">
             <div className="space-y-5">
-              {definition.fields.map((field) => {
-                if (field.type === 'collection') {
-                  const collectionValue =
-                    props[String(field.key)];
+              {definition.fields.map(
+                (field) => {
+                  if (
+                    field.type ===
+                    'collection'
+                  ) {
+                    const collectionValue =
+                      props[
+                        String(
+                          field.key,
+                        )
+                      ];
 
-                  const items = Array.isArray(collectionValue)
-                    ? collectionValue.filter(
-                        (
-                          item,
-                        ): item is Record<
-                          string,
-                          unknown
-                        > & { id: string } =>
-                          item !== null &&
-                          typeof item === 'object' &&
-                          'id' in item &&
-                          typeof item.id === 'string',
+                    const items =
+                      Array.isArray(
+                        collectionValue,
                       )
-                    : [];
+                        ? collectionValue.filter(
+                            (
+                              item,
+                            ): item is Record<
+                              string,
+                              unknown
+                            > & {
+                              id: string;
+                            } =>
+                              item !==
+                                null &&
+                              typeof item ===
+                                'object' &&
+                              'id' in item &&
+                              typeof item.id ===
+                                'string',
+                          )
+                        : [];
+
+                    return (
+                      <CollectionField
+                        key={String(
+                          field.key,
+                        )}
+                        sectionId={
+                          selectedSection.id
+                        }
+                        collectionKey={String(
+                          field.key,
+                        )}
+                        label={
+                          field.label
+                        }
+                        itemLabel={
+                          field.itemLabel
+                        }
+                        items={items}
+                        fields={
+                          field.fields
+                        }
+                        summaryField={
+                          'summaryField' in
+                          field
+                            ? field.summaryField
+                            : undefined
+                        }
+                        createItem={
+                          field.createItem
+                        }
+                      />
+                    );
+                  }
+
+                  const value =
+                    props[
+                      String(
+                        field.key,
+                      )
+                    ];
+
+                  const description =
+                    'description' in
+                      field &&
+                    typeof field.description ===
+                      'string'
+                      ? field.description
+                      : undefined;
 
                   return (
-                    <CollectionField
-                      key={String(field.key)}
-                      sectionId={selectedSection.id}
-                      collectionKey={String(field.key)}
-                      label={field.label}
-                      itemLabel={field.itemLabel}
-                      items={items}
-                      fields={field.fields}
-                      summaryField={
-                        'summaryField' in field
-                          ? field.summaryField
-                          : undefined
+                    <PropertyField
+                      key={String(
+                        field.key,
+                      )}
+                      label={
+                        field.label
                       }
-                      createItem={field.createItem}
+                      type={field.type}
+                      value={
+                        typeof value ===
+                        'string'
+                          ? value
+                          : ''
+                      }
+                      placeholder={
+                        field.placeholder
+                      }
+                      description={
+                        description
+                      }
+                      required={
+                        'required' in
+                        field
+                          ? Boolean(
+                              field.required,
+                            )
+                          : false
+                      }
+                      error={
+                        fieldErrors[
+                          String(
+                            field.key,
+                          )
+                        ]
+                      }
+                      onChange={(
+                        nextValue,
+                      ) =>
+                        updateSectionField(
+                          selectedSection.id,
+                          String(
+                            field.key,
+                          ),
+                          nextValue,
+                        )
+                      }
                     />
                   );
-                }
-
-                const value =
-                  props[String(field.key)];
-
-                const description =
-                  'description' in field &&
-                  typeof field.description === 'string'
-                    ? field.description
-                    : undefined;
-
-                return (
-                  <PropertyField
-                    key={String(field.key)}
-                    label={field.label}
-                    type={field.type}
-                    value={
-                      typeof value === 'string'
-                        ? value
-                        : ''
-                    }
-                    placeholder={field.placeholder}
-                    description={description}
-                    required={
-                      'required' in field
-                        ? Boolean(field.required)
-                        : false
-                    }
-                    error={getFieldError(
-                      String(field.key),
-                    )}
-                    onChange={(nextValue) =>
-                      updateSectionField(
-                        selectedSection.id,
-                        String(field.key),
-                        nextValue,
-                      )
-                    }
-                  />
-                );
-              })}
+                },
+              )}
             </div>
           </div>
         </div>

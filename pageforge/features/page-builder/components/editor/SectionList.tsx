@@ -1,76 +1,61 @@
+// features/page-builder/components/editor/SectionList.tsx
+
 'use client';
 
-import {
-  useState,
-} from 'react';
+import { useState } from 'react';
 
-import {
-  DragDropProvider,
-} from '@dnd-kit/react';
+import { DragDropProvider } from '@dnd-kit/react';
 
-import {
-  isSortable,
-} from '@dnd-kit/react/sortable';
+import { isSortable } from '@dnd-kit/react/sortable';
 
-import {
-  usePageEditorStore,
-} from '../../providers/page-editor-provider';
+import { usePageEditorStore } from '../../providers/page-editor-provider';
 
 import SortableSectionItem from './SortedSectionItem';
 
-import type {
-  SectionType,
-} from '../../domain/page-schema';
+import type { SectionType } from '../../domain/page-schema';
 
-import {
-  sectionRegistry,
-} from '../../registry/section-registry';
-
-const SECTION_OPTIONS =
-  Object.values(
-    sectionRegistry,
-  ).map(
-    (sectionModule) => ({
-      type: sectionModule.type,
-      label:
-        sectionModule
-          .propertyDefinition
-          .label,
-    }),
-  ) satisfies Array<{
-    type: SectionType;
-    label: string;
-  }>;
+const SECTION_OPTIONS: Array<{
+  type: SectionType;
+  label: string;
+}> = [
+  {
+    type: 'hero',
+    label: 'Hero',
+  },
+  {
+    type: 'features',
+    label: 'Features',
+  },
+  {
+    type: 'testimonials',
+    label: 'Testimonials',
+  },
+  {
+    type: 'cta',
+    label: 'CTA',
+  },
+];
 
 export default function SectionList() {
-  const [
-    showAddMenu,
-    setShowAddMenu,
-  ] = useState(false);
+  const [showAddMenu, setShowAddMenu] =
+    useState(false);
 
-  const sections =
-    usePageEditorStore(
-      (state) =>
-        state.config.sections,
-    );
+  const sections = usePageEditorStore(
+    (state) => state.config.sections,
+  );
 
-  const addSection =
-    usePageEditorStore(
-      (state) =>
-        state.addSection,
-    );
+  const addSection = usePageEditorStore(
+    (state) => state.addSection,
+  );
 
-  const reorderSections =
-    usePageEditorStore(
-      (state) =>
-        state.reorderSections,
-    );
+  const reorderSections = usePageEditorStore(
+    (state) => state.reorderSections,
+  );
 
   const handleAddSection = (
     type: SectionType,
   ) => {
     addSection(type);
-
     setShowAddMenu(false);
   };
 
@@ -89,21 +74,14 @@ export default function SectionList() {
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         <DragDropProvider
           onDragEnd={(event) => {
-            if (
-              event.canceled
-            ) {
+            if (event.canceled) {
               return;
             }
 
-            const {
-              source,
-            } = event.operation;
+            const { source } =
+              event.operation;
 
-            if (
-              !isSortable(
-                source,
-              )
-            ) {
+            if (!isSortable(source)) {
               return;
             }
 
@@ -127,17 +105,10 @@ export default function SectionList() {
         >
           <div className="space-y-2">
             {sections.map(
-              (
-                section,
-                index,
-              ) => (
+              (section, index) => (
                 <SortableSectionItem
-                  key={
-                    section.id
-                  }
-                  section={
-                    section
-                  }
+                  key={section.id}
+                  section={section}
                   index={index}
                 />
               ),
@@ -157,9 +128,7 @@ export default function SectionList() {
               {SECTION_OPTIONS.map(
                 (option) => (
                   <button
-                    key={
-                      option.type
-                    }
+                    key={option.type}
                     type="button"
                     onClick={() =>
                       handleAddSection(
@@ -168,9 +137,7 @@ export default function SectionList() {
                     }
                     className="w-full rounded-md px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    {
-                      option.label
-                    }
+                    {option.label}
                   </button>
                 ),
               )}
@@ -182,8 +149,7 @@ export default function SectionList() {
           type="button"
           onClick={() =>
             setShowAddMenu(
-              (current) =>
-                !current,
+              (current) => !current,
             )
           }
           className="w-full rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"

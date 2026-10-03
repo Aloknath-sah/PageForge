@@ -1,16 +1,25 @@
+// features/page-builder/components/editor/CollectionField.tsx
+
 'use client';
 
-import { memo, useCallback, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useState,
+} from 'react';
 
-import { usePageEditorStore } from '../../providers/page-editor-provider';
+import {
+  usePageEditorStore,
+} from '../../providers/page-editor-provider';
 
 import type {
   CollectionItemField,
 } from '../../domain/section-properties';
 
-type CollectionItem = Record<string, unknown> & {
-  id: string;
-};
+type CollectionItem =
+  Record<string, unknown> & {
+    id: string;
+  };
 
 type CollectionFieldProps = {
   sectionId: string;
@@ -23,131 +32,213 @@ type CollectionFieldProps = {
   createItem: () => CollectionItem;
 };
 
-/**
- * The collection container itself only needs to re-render when the collection
- * data or its configuration changes. For unrelated section-property updates,
- * the existing object/array references remain stable.
- */
-const CollectionField = memo(function CollectionField({
-  sectionId,
-  collectionKey,
-  label,
-  itemLabel,
-  items,
-  fields,
-  summaryField,
-  createItem,
-}: CollectionFieldProps) {
-  const addCollectionItem = usePageEditorStore(
-    (state) => state.addCollectionItem,
-  );
+const CollectionField = memo(
+  function CollectionField({
+    sectionId,
+    collectionKey,
+    label,
+    itemLabel,
+    items,
+    fields,
+    summaryField,
+    createItem,
+  }: CollectionFieldProps) {
+    const addCollectionItem =
+      usePageEditorStore(
+        (state) =>
+          state.addCollectionItem,
+      );
 
-  const updateCollectionItem = usePageEditorStore(
-    (state) => state.updateCollectionItem,
-  );
+    const updateCollectionItem =
+      usePageEditorStore(
+        (state) =>
+          state.updateCollectionItem,
+      );
 
-  const removeCollectionItem = usePageEditorStore(
-    (state) => state.removeCollectionItem,
-  );
+    const removeCollectionItem =
+      usePageEditorStore(
+        (state) =>
+          state.removeCollectionItem,
+      );
 
-  const reorderCollectionItems = usePageEditorStore(
-    (state) => state.reorderCollectionItems,
-  );
+    const reorderCollectionItems =
+      usePageEditorStore(
+        (state) =>
+          state.reorderCollectionItems,
+      );
 
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(
-    () => new Set(),
-  );
+    const [
+      expandedItems,
+      setExpandedItems,
+    ] = useState<Set<string>>(
+      () => new Set(),
+    );
 
-  const handleToggle = useCallback((itemId: string) => {
-    setExpandedItems((current) => {
-      const next = new Set(current);
+    const handleToggle =
+      useCallback(
+        (itemId: string) => {
+          setExpandedItems(
+            (current) => {
+              const next =
+                new Set(current);
 
-      if (next.has(itemId)) {
-        next.delete(itemId);
-      } else {
-        next.add(itemId);
-      }
+              if (
+                next.has(itemId)
+              ) {
+                next.delete(
+                  itemId,
+                );
+              } else {
+                next.add(itemId);
+              }
 
-      return next;
-    });
-  }, []);
+              return next;
+            },
+          );
+        },
+        [],
+      );
 
-  const handleAdd = () => {
-    const newItem = createItem();
+    const handleAdd =
+      useCallback(() => {
+        const newItem =
+          createItem();
 
-    addCollectionItem(sectionId, collectionKey, newItem);
+        addCollectionItem(
+          sectionId,
+          collectionKey,
+          newItem,
+        );
 
-    setExpandedItems((current) => {
-      const next = new Set(current);
-      next.add(newItem.id);
-      return next;
-    });
-  };
+        setExpandedItems(
+          (current) => {
+            const next =
+              new Set(current);
 
-  const handleDelete = (itemId: string) => {
-    removeCollectionItem(sectionId, collectionKey, itemId);
+            next.add(newItem.id);
 
-    setExpandedItems((current) => {
-      const next = new Set(current);
-      next.delete(itemId);
-      return next;
-    });
-  };
+            return next;
+          },
+        );
+      }, [
+        addCollectionItem,
+        collectionKey,
+        createItem,
+        sectionId,
+      ]);
 
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-900">{label}</p>
+    const handleDelete =
+      useCallback(
+        (itemId: string) => {
+          removeCollectionItem(
+            sectionId,
+            collectionKey,
+            itemId,
+          );
 
-          <p className="text-xs text-gray-500">
-            {items.length} {items.length === 1 ? 'item' : 'items'}
-          </p>
+          setExpandedItems(
+            (current) => {
+              const next =
+                new Set(current);
+
+              next.delete(itemId);
+
+              return next;
+            },
+          );
+        },
+        [
+          collectionKey,
+          removeCollectionItem,
+          sectionId,
+        ],
+      );
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-900">
+              {label}
+            </p>
+
+            <p className="text-xs text-gray-500">
+              {items.length}{' '}
+              {items.length === 1
+                ? 'item'
+                : 'items'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
+          >
+            + Add
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="rounded-md bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-        >
-          + Add
-        </button>
+        <div className="space-y-2">
+          {items.map(
+            (item, index) => (
+              <CollectionItem
+                key={item.id}
+                item={item}
+                index={index}
+                itemLabel={
+                  itemLabel
+                }
+                fields={fields}
+                summaryField={
+                  summaryField
+                }
+                expanded={expandedItems.has(
+                  item.id,
+                )}
+                onToggle={
+                  handleToggle
+                }
+                sectionId={
+                  sectionId
+                }
+                collectionKey={
+                  collectionKey
+                }
+                updateCollectionItem={
+                  updateCollectionItem
+                }
+                removeCollectionItem={
+                  removeCollectionItem
+                }
+                reorderCollectionItems={
+                  reorderCollectionItems
+                }
+                onDelete={
+                  handleDelete
+                }
+              />
+            ),
+          )}
+        </div>
+
+        {items.length === 0 && (
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="w-full rounded-lg border border-dashed border-gray-300 px-4 py-4 text-sm text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
+          >
+            Add your first{' '}
+            {itemLabel.toLowerCase()}
+          </button>
+        )}
       </div>
+    );
+  },
+);
 
-      <div className="space-y-2">
-        {items.map((item, index) => (
-          <CollectionItem
-            key={item.id}
-            item={item}
-            index={index}
-            itemLabel={itemLabel}
-            fields={fields}
-            summaryField={summaryField}
-            expanded={expandedItems.has(item.id)}
-            onToggle={handleToggle}
-            sectionId={sectionId}
-            collectionKey={collectionKey}
-            updateCollectionItem={updateCollectionItem}
-            removeCollectionItem={removeCollectionItem}
-            reorderCollectionItems={reorderCollectionItems}
-          />
-        ))}
-      </div>
-
-      {items.length === 0 && (
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="w-full rounded-lg border border-dashed border-gray-300 px-4 py-4 text-sm text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700"
-        >
-          Add your first {itemLabel.toLowerCase()}
-        </button>
-      )}
-    </div>
-  );
-});
-
-CollectionField.displayName = 'CollectionField';
+CollectionField.displayName =
+  'CollectionField';
 
 type CollectionItemProps = {
   sectionId: string;
@@ -158,12 +249,20 @@ type CollectionItemProps = {
   fields: CollectionItemField<any>[];
   summaryField?: string;
   expanded: boolean;
-  onToggle: (itemId: string) => void;
+  onToggle: (
+    itemId: string,
+  ) => void;
+  onDelete: (
+    itemId: string,
+  ) => void;
   updateCollectionItem: (
     sectionId: string,
     collectionKey: string,
     itemId: string,
-    patch: Record<string, unknown>,
+    patch: Record<
+      string,
+      unknown
+    >,
   ) => void;
   removeCollectionItem: (
     sectionId: string,
@@ -178,200 +277,288 @@ type CollectionItemProps = {
   ) => void;
 };
 
-const CollectionItem = memo(function CollectionItem({
-  sectionId,
-  collectionKey,
-  item,
-  index,
-  itemLabel,
-  fields,
-  summaryField,
-  expanded,
-  onToggle,
-  updateCollectionItem,
-  removeCollectionItem,
-  reorderCollectionItems,
-}: CollectionItemProps) {
-  const summaryValue = summaryField
-    ? item[summaryField]
-    : undefined;
+const CollectionItem = memo(
+  function CollectionItem({
+    sectionId,
+    collectionKey,
+    item,
+    index,
+    itemLabel,
+    fields,
+    summaryField,
+    expanded,
+    onToggle,
+    onDelete,
+    updateCollectionItem,
+    removeCollectionItem,
+    reorderCollectionItems,
+  }: CollectionItemProps) {
+    const summaryValue =
+      summaryField
+        ? item[summaryField]
+        : undefined;
 
-  const summary =
-    typeof summaryValue === 'string'
-      ? summaryValue.trim()
-      : '';
+    const summary =
+      typeof summaryValue ===
+      'string'
+        ? summaryValue.trim()
+        : '';
 
-  const handleUpdate = (patch: Record<string, unknown>) => {
-    updateCollectionItem(
-      sectionId,
-      collectionKey,
-      item.id,
-      patch,
-    );
-  };
+    const handleUpdate =
+      useCallback(
+        (
+          patch: Record<
+            string,
+            unknown
+          >,
+        ) => {
+          updateCollectionItem(
+            sectionId,
+            collectionKey,
+            item.id,
+            patch,
+          );
+        },
+        [
+          collectionKey,
+          item.id,
+          sectionId,
+          updateCollectionItem,
+        ],
+      );
 
-  const handleDelete = () => {
-    removeCollectionItem(
-      sectionId,
-      collectionKey,
-      item.id,
-    );
-  };
+    const handleDelete =
+      useCallback(() => {
+        onDelete(item.id);
+      }, [
+        item.id,
+        onDelete,
+      ]);
 
-  const handleMoveUp = () => {
-    reorderCollectionItems(
-      sectionId,
-      collectionKey,
-      index,
-      index - 1,
-    );
-  };
+    const handleMoveUp =
+      useCallback(() => {
+        reorderCollectionItems(
+          sectionId,
+          collectionKey,
+          index,
+          index - 1,
+        );
+      }, [
+        collectionKey,
+        index,
+        reorderCollectionItems,
+        sectionId,
+      ]);
 
-  const handleMoveDown = () => {
-    reorderCollectionItems(
-      sectionId,
-      collectionKey,
-      index,
-      index + 1,
-    );
-  };
+    const handleMoveDown =
+      useCallback(() => {
+        reorderCollectionItems(
+          sectionId,
+          collectionKey,
+          index,
+          index + 1,
+        );
+      }, [
+        collectionKey,
+        index,
+        reorderCollectionItems,
+        sectionId,
+      ]);
 
-  return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-      <div className="flex min-h-12 items-center justify-between gap-3 px-3 py-2.5">
-        <button
-          type="button"
-          onClick={() => onToggle(item.id)}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
-          aria-expanded={expanded}
-          aria-label={`${expanded ? 'Collapse' : 'Expand'} ${itemLabel} ${
-            index + 1
-          }`}
-        >
-          <span
-            aria-hidden="true"
-            className="flex h-5 w-5 shrink-0 items-center justify-center text-xs text-gray-500"
-          >
-            {expanded ? '▼' : '▶'}
-          </span>
+    const handleToggle =
+      useCallback(() => {
+        onToggle(item.id);
+      }, [
+        item.id,
+        onToggle,
+      ]);
 
-          <span className="truncate text-sm font-medium text-gray-800">
-            {itemLabel} {index + 1}
-          </span>
-
-          {summary && (
-            <>
-              <span
-                aria-hidden="true"
-                className="text-xs text-gray-300"
-              >
-                —
-              </span>
-
-              <span className="min-w-0 truncate text-xs text-gray-500">
-                {summary}
-              </span>
-            </>
-          )}
-        </button>
-
-        <div className="flex shrink-0 items-center gap-1">
+    return (
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+        <div className="flex min-h-12 items-center justify-between gap-3 px-3 py-2.5">
           <button
             type="button"
-            onClick={handleMoveUp}
-            disabled={index === 0}
-            className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-white disabled:cursor-not-allowed disabled:opacity-30"
-            aria-label={`Move ${itemLabel} up`}
+            onClick={handleToggle}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+            aria-expanded={
+              expanded
+            }
+            aria-label={`${
+              expanded
+                ? 'Collapse'
+                : 'Expand'
+            } ${itemLabel} ${
+              index + 1
+            }`}
           >
-            ↑
-          </button>
+            <span
+              aria-hidden="true"
+              className="flex h-5 w-5 shrink-0 items-center justify-center text-xs text-gray-500"
+            >
+              {expanded
+                ? '▼'
+                : '▶'}
+            </span>
 
-          <button
-            type="button"
-            onClick={handleMoveDown}
-            className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-white"
-            aria-label={`Move ${itemLabel} down`}
-          >
-            ↓
-          </button>
+            <span className="truncate text-sm font-medium text-gray-800">
+              {itemLabel}{' '}
+              {index + 1}
+            </span>
 
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-
-      {expanded && (
-        <div className="border-t border-gray-200 bg-white p-4">
-          <div className="space-y-4">
-            {fields.map((field) => {
-              const value = item[String(field.key)];
-
-              const stringValue =
-                typeof value === 'string'
-                  ? value
-                  : '';
-
-              return (
-                <label
-                  key={String(field.key)}
-                  className="block"
+            {summary && (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="text-xs text-gray-300"
                 >
-                  <span className="mb-1.5 block text-xs font-medium text-gray-700">
-                    {field.label}
-                  </span>
+                  —
+                </span>
 
-                  {field.type ===
-                  'textarea' ? (
-                    <textarea
-                      value={stringValue}
-                      placeholder={
-                        field.placeholder
-                      }
-                      onChange={(event) =>
-                        handleUpdate({
-                          [field.key]:
-                            event.target.value,
-                        })
-                      }
-                      rows={3}
-                      className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    />
-                  ) : (
-                    <input
-                      type={
-                        field.type ===
-                        'url'
-                          ? 'url'
-                          : 'text'
-                      }
-                      value={stringValue}
-                      placeholder={
-                        field.placeholder
-                      }
-                      onChange={(event) =>
-                        handleUpdate({
-                          [field.key]:
-                            event.target.value,
-                        })
-                      }
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    />
-                  )}
-                </label>
-              );
-            })}
+                <span className="min-w-0 truncate text-xs text-gray-500">
+                  {summary}
+                </span>
+              </>
+            )}
+          </button>
+
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={
+                handleMoveUp
+              }
+              disabled={
+                index === 0
+              }
+              className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-white disabled:cursor-not-allowed disabled:opacity-30"
+              aria-label={`Move ${itemLabel} up`}
+            >
+              ↑
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                handleMoveDown
+              }
+              className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-white"
+              aria-label={`Move ${itemLabel} down`}
+            >
+              ↓
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                handleDelete
+              }
+              className="rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50"
+              aria-label={`Delete ${itemLabel}`}
+            >
+              Delete
+            </button>
           </div>
         </div>
-      )}
-    </div>
-  );
-});
 
-CollectionItem.displayName = 'CollectionItem';
+        {expanded && (
+          <div className="border-t border-gray-200 bg-white p-4">
+            <div className="space-y-4">
+              {fields.map(
+                (field) => {
+                  const value =
+                    item[
+                      String(
+                        field.key,
+                      )
+                    ];
+
+                  const stringValue =
+                    typeof value ===
+                    'string'
+                      ? value
+                      : '';
+
+                  return (
+                    <label
+                      key={String(
+                        field.key,
+                      )}
+                      className="block"
+                    >
+                      <span className="mb-1.5 block text-xs font-medium text-gray-700">
+                        {
+                          field.label
+                        }
+                      </span>
+
+                      {field.type ===
+                      'textarea' ? (
+                        <textarea
+                          value={
+                            stringValue
+                          }
+                          placeholder={
+                            field.placeholder
+                          }
+                          onChange={(
+                            event,
+                          ) =>
+                            handleUpdate(
+                              {
+                                [
+                                  field.key
+                                ]: event
+                                  .target
+                                  .value,
+                              },
+                            )
+                          }
+                          rows={3}
+                          className="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        />
+                      ) : (
+                        <input
+                          type={
+                            field.type ===
+                            'url'
+                              ? 'url'
+                              : 'text'
+                          }
+                          value={
+                            stringValue
+                          }
+                          placeholder={
+                            field.placeholder
+                          }
+                          onChange={(
+                            event,
+                          ) =>
+                            handleUpdate(
+                              {
+                                [
+                                  field.key
+                                ]: event
+                                  .target
+                                  .value,
+                              },
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        />
+                      )}
+                    </label>
+                  );
+                },
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  },
+);
+
+CollectionItem.displayName =
+  'CollectionItem';
 
 export default CollectionField;

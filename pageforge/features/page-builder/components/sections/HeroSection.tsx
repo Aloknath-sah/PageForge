@@ -36,6 +36,9 @@ export default function HeroSection({ props }: HeroSectionProps) {
             <img
               src={props.imageUrl}
               alt=""
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
               className="max-h-[400px] w-full rounded-xl object-cover"
             />
           ) : (

@@ -267,12 +267,26 @@ async function publish(
     );
   }
 
-  return {
-    pageId: data.page_id,
-    version: data.version,
-    publishedAt:
-      data.published_at,
-  };
+  type PublishPageResult = {
+  page_id: string;
+  version: number;
+  published_at: string;
+};
+
+const publishedPage = data as PublishPageResult | null;
+
+if (!publishedPage) {
+  throw new PageRepositoryError(
+    'Unable to publish page.',
+    new Error('Publish RPC returned no data.'),
+  );
+}
+
+return {
+  pageId: publishedPage.page_id,
+  version: publishedPage.version,
+  publishedAt: publishedPage.published_at,
+};
 }
 
 async function getPublishedBySlug(

@@ -1,6 +1,6 @@
 'use client';
 
-import type { MouseEvent } from 'react';
+import { memo, type MouseEvent } from 'react';
 
 import { useSortable } from '@dnd-kit/react/sortable';
 
@@ -17,7 +17,7 @@ function formatSectionName(type: PageSection['type']) {
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
-export default function SortableSectionItem({
+const SortableSectionItem = memo(function SortableSectionItem({
   section,
   index,
 }: SortableSectionItemProps) {
@@ -25,9 +25,7 @@ export default function SortableSectionItem({
     (state) => state.selectedSectionId,
   );
 
-  const selectSection = usePageEditorStore(
-    (state) => state.selectSection,
-  );
+  const selectSection = usePageEditorStore((state) => state.selectSection);
 
   const setSectionEnabled = usePageEditorStore(
     (state) => state.setSectionEnabled,
@@ -37,15 +35,9 @@ export default function SortableSectionItem({
     (state) => state.duplicateSection,
   );
 
-  const deleteSection = usePageEditorStore(
-    (state) => state.deleteSection,
-  );
+  const deleteSection = usePageEditorStore((state) => state.deleteSection);
 
-  const {
-    ref,
-    handleRef,
-    isDragging,
-  } = useSortable({
+  const sortable = useSortable({
     id: section.id,
     index,
     type: 'page-section',
@@ -58,44 +50,33 @@ export default function SortableSectionItem({
     selectSection(section.id);
   };
 
-  const handleToggle = (
-    event: MouseEvent<HTMLButtonElement>,
-  ) => {
+  const handleToggle = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
 
-    setSectionEnabled(
-      section.id,
-      !section.enabled,
-    );
+    setSectionEnabled(section.id, !section.enabled);
   };
 
-  const handleDuplicate = (
-    event: MouseEvent<HTMLButtonElement>,
-  ) => {
+  const handleDuplicate = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
 
     duplicateSection(section.id);
   };
 
-  const handleDelete = (
-    event: MouseEvent<HTMLButtonElement>,
-  ) => {
+  const handleDelete = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
 
     deleteSection(section.id);
   };
 
-  const sectionLabel = formatSectionName(section.type);
-
   return (
     <div
-      ref={ref}
+      ref={sortable.ref}
       className={[
         'group rounded-lg border bg-white transition',
         selected
           ? 'border-blue-500 shadow-sm'
           : 'border-gray-200 hover:border-gray-300',
-        isDragging ? 'opacity-50' : '',
+        sortable.isDragging ? 'opacity-50' : '',
       ].join(' ')}
     >
       <div
@@ -103,42 +84,32 @@ export default function SortableSectionItem({
         tabIndex={0}
         onClick={handleSelect}
         onKeyDown={(event) => {
-          if (
-            event.key === 'Enter' ||
-            event.key === ' '
-          ) {
+          if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             handleSelect();
           }
         }}
         className="flex min-h-12 items-center gap-2 px-2"
-        aria-label={`Select ${sectionLabel} section`}
+        aria-label={`Select ${formatSectionName(section.type)} section`}
       >
         <button
-          ref={handleRef}
+          ref={sortable.handleRef}
           type="button"
-          aria-label={`Drag ${sectionLabel}`}
+          aria-label={`Drag ${formatSectionName(section.type)}`}
           className="flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 active:cursor-grabbing"
-          onClick={(event) =>
-            event.stopPropagation()
-          }
+          onClick={(event) => event.stopPropagation()}
         >
-          <span
-            aria-hidden="true"
-            className="text-lg leading-none"
-          >
+          <span aria-hidden="true" className="text-lg leading-none">
             ⋮⋮
           </span>
         </button>
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-gray-900">
-            {sectionLabel}
+            {formatSectionName(section.type)}
           </p>
 
-          <p className="text-xs text-gray-400">
-            Section {index + 1}
-          </p>
+          <p className="text-xs text-gray-400">Section {index + 1}</p>
         </div>
 
         <button
@@ -146,8 +117,8 @@ export default function SortableSectionItem({
           onClick={handleToggle}
           aria-label={
             section.enabled
-              ? `Hide ${sectionLabel}`
-              : `Show ${sectionLabel}`
+              ? `Hide ${formatSectionName(section.type)}`
+              : `Show ${formatSectionName(section.type)}`
           }
           className="rounded-md px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-900"
         >
@@ -157,7 +128,7 @@ export default function SortableSectionItem({
         <button
           type="button"
           onClick={handleDuplicate}
-          aria-label={`Duplicate ${sectionLabel}`}
+          aria-label={`Duplicate ${formatSectionName(section.type)}`}
           className="rounded-md px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-900"
         >
           Copy
@@ -166,7 +137,7 @@ export default function SortableSectionItem({
         <button
           type="button"
           onClick={handleDelete}
-          aria-label={`Delete ${sectionLabel}`}
+          aria-label={`Delete ${formatSectionName(section.type)}`}
           className="rounded-md px-2 py-1 text-xs text-red-500 hover:bg-red-50 hover:text-red-700"
         >
           Delete
@@ -174,4 +145,8 @@ export default function SortableSectionItem({
       </div>
     </div>
   );
-}
+});
+
+SortableSectionItem.displayName = 'SortableSectionItem';
+
+export default SortableSectionItem;

@@ -1,7 +1,4 @@
-import type {
-  ComponentType,
-  ReactNode,
-} from 'react';
+import { memo, type ComponentType, type ReactNode } from 'react';
 
 import type {
   PageConfig,
@@ -21,9 +18,19 @@ type PageRendererProps = {
   ) => ReactNode;
 };
 
-function renderSection(
-  section: PageSection,
-): ReactNode {
+type RenderedSectionProps = {
+  section: PageSection;
+};
+
+/**
+ * Keeps the section boundary stable when the parent PageRenderer re-renders.
+ *
+ * The editor store preserves object identity for sections that were not
+ * changed, so React.memo lets those sections skip work during unrelated edits.
+ */
+const RenderedSection = memo(function RenderedSection({
+  section,
+}: RenderedSectionProps) {
   if (!section.enabled) {
     return null;
   }
@@ -40,7 +47,9 @@ function renderSection(
       props={section.props}
     />
   );
-}
+});
+
+RenderedSection.displayName = 'RenderedSection';
 
 export default function PageRenderer({
   config,
@@ -61,14 +70,16 @@ export default function PageRenderer({
     >
       {config.sections.map(
         (section) => {
-          const content =
-            renderSection(
-              section,
-            );
-
-          if (!content) {
+          if (!section.enabled) {
             return null;
           }
+
+          const content = (
+            <RenderedSection
+              key={section.id}
+              section={section}
+            />
+          );
 
           return (
             <div

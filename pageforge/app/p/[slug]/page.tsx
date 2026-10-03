@@ -1,87 +1,27 @@
-import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { createClient } from '../../../lib/supabase/server';
+import { createPageRepository } from '@/lib/pages/page-repository';
+import { createClient } from '@/lib/supabase/server';
 
-import {
-  createPageRepository,
-} from '../../../lib/pages/page-repository';
+import PageRenderer from '@/features/page-builder/components/renderer/PageRenderer';
+import { validatePageConfig } from '@/features/page-builder/domain/page-runtime-validation';
 
-import PageRenderer from '../../../features/page-builder/components/renderer/PageRenderer';
-
-type PublicPageProps = {
+type PublishedPageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
 
-export const dynamic =
-  'force-dynamic';
+export default async function PublishedPage({
+  params,
+}: PublishedPageProps) {
+  const { slug } = await params;
 
-export async function generateMetadata(
-  {
-    params,
-  }: PublicPageProps,
-): Promise<Metadata> {
-  const {
-    slug,
-  } = await params;
+  const supabase = await createClient();
 
-  const supabase =
-    await createClient();
-
-  const repository =
-    createPageRepository(
-      supabase,
-    );
-
-  const page =
-    await repository.getPublishedBySlug(
-      slug,
-    );
-
-  if (!page) {
-    return {
-      title: 'Page not found | PageForge',
-    };
-  }
-
-  const config =
-    page.published_config;
-
-  return {
-    title:
-      config.seo.title,
-    description:
-      config.seo.description,
-    ...(config.seo.ogImageUrl
-      ? {
-          openGraph: {
-            images: [
-              config.seo.ogImageUrl,
-            ],
-          },
-        }
-      : {}),
-  };
-}
-
-export default async function PublicPage(
-  {
-    params,
-  }: PublicPageProps,
-) {
-  const {
-    slug,
-  } = await params;
-
-  const supabase =
-    await createClient();
-
-  const repository =
-    createPageRepository(
-      supabase,
-    );
+  const repository = createPageRepository(
+    supabase,
+  );
 
   const page =
     await repository.getPublishedBySlug(
@@ -92,11 +32,23 @@ export default async function PublicPage(
     notFound();
   }
 
+  const validationResult =
+    validatePageConfig(
+      page.published_config,
+    );
+
+  if (!validationResult.success) {
+    const firstError =
+      validationResult.errors[0];
+
+    throw new Error(
+      `Invalid published page configuration for "${slug}" at ${firstError?.path ?? 'unknown path'}: ${firstError?.message ?? 'unknown validation error'}`,
+    );
+  }
+
   return (
     <PageRenderer
-      config={
-        page.published_config
-      }
+      config={validationResult.data}
     />
   );
 }

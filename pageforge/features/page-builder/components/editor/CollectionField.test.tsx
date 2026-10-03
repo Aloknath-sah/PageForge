@@ -13,6 +13,7 @@ import {
 } from '../../providers/page-editor-provider';
 
 import { samplePage } from '../../domain/sample-page';
+import type { FeaturesSection } from '../../domain/page-schema';
 
 import {
   getSectionPropertyDefinition,
@@ -22,7 +23,7 @@ function TestHarness() {
   const featuresSection =
     usePageEditorStore((state) =>
       state.config.sections.find(
-        (section) =>
+        (section): section is FeaturesSection =>
           section.id === 'features-1' &&
           section.type === 'features',
       ),

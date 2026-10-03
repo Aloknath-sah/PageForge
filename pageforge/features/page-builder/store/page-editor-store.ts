@@ -322,11 +322,9 @@ export const createPageEditorStore =
 
         future: [],
 
-        isDirty:
-          getDirtyState(
-            nextConfig,
-            state.savedConfig,
-          ),
+        // Every committed config change is a known dirty transition.
+        // Avoid serializing the entire PageConfig on every editor update.
+        isDirty: true,
       };
     }
 
@@ -345,11 +343,10 @@ export const createPageEditorStore =
 
           future: [],
 
-          isDirty:
-            getDirtyState(
-              nextConfig,
-              state.savedConfig,
-            ),
+          // The transaction has changed the draft, so it is dirty.
+          // Equality against the saved snapshot is deferred to the
+          // transaction boundary instead of happening on every keystroke.
+          isDirty: true,
         };
       }
 

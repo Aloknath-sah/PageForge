@@ -4,11 +4,33 @@ import { samplePage } from '../domain/sample-page';
 import {
   createPageEditorStore,
 } from './page-editor-store';
+import type {
+  FeaturesSection,
+  PageSection,
+} from '../domain/page-schema';
 
 function createTestStore() {
   return createPageEditorStore(
     structuredClone(samplePage),
   );
+}
+
+function getFeaturesSection(
+  sections: PageSection[],
+): FeaturesSection {
+  const featuresSection =
+    sections.find(
+      (section): section is FeaturesSection =>
+        section.type === 'features',
+    );
+
+  if (!featuresSection) {
+    throw new Error(
+      'Expected a features section.',
+    );
+  }
+
+  return featuresSection;
 }
 
 describe('page-editor-store', () => {
@@ -29,11 +51,9 @@ describe('page-editor-store', () => {
     const store = createTestStore();
 
     const featuresSection =
-      samplePage.sections.find(
-        (section) => section.type === 'features',
+      getFeaturesSection(
+        samplePage.sections,
       );
-
-    expect(featuresSection).toBeDefined();
 
     store
       .getState()
@@ -50,11 +70,9 @@ describe('page-editor-store', () => {
     const store = createTestStore();
 
     const featuresSection =
-      samplePage.sections.find(
-        (section) => section.type === 'features',
+      getFeaturesSection(
+        samplePage.sections,
       );
-
-    expect(featuresSection).toBeDefined();
 
     store
       .getState()
@@ -226,15 +244,9 @@ describe('page-editor-store', () => {
     const store = createTestStore();
 
     const source =
-      store.getState().config.sections.find(
-        (section) =>
-          section.type === 'features',
+      getFeaturesSection(
+        store.getState().config.sections,
       );
-
-    expect(source).toBeDefined();
-    expect(source?.type).toBe(
-      'features',
-    );
 
     const originalItemIds =
       source!.props.items.map(
@@ -261,8 +273,17 @@ describe('page-editor-store', () => {
       sections[sourceIndex + 1];
 
     expect(
-      duplicated.type,
+      duplicated?.type,
     ).toBe('features');
+
+    if (
+      duplicated?.type !==
+      'features'
+    ) {
+      throw new Error(
+        'Expected duplicated features section.',
+      );
+    }
 
     const duplicatedItemIds =
       duplicated.props.items.map(
@@ -528,22 +549,17 @@ describe('page-editor-store', () => {
     const store = createTestStore();
 
     const features =
-      store.getState().config.sections.find(
-        (section) =>
-          section.type === 'features',
+      getFeaturesSection(
+        store.getState().config.sections,
       );
 
-    expect(features).toBeDefined();
-
     const initialCount =
-      features!.type === 'features'
-        ? features.props.items.length
-        : 0;
+      features.props.items.length;
 
     store
       .getState()
       .addCollectionItem(
-        features!.id,
+        features.id,
         'items',
         {
           id: 'feature-new',
@@ -556,7 +572,7 @@ describe('page-editor-store', () => {
     const updated =
       store.getState().config.sections.find(
         (section) =>
-          section.id === features!.id,
+          section.id === features.id,
       );
 
     expect(updated?.type).toBe(
@@ -589,22 +605,17 @@ describe('page-editor-store', () => {
     const store = createTestStore();
 
     const features =
-      store.getState().config.sections.find(
-        (section) =>
-          section.type === 'features',
+      getFeaturesSection(
+        store.getState().config.sections,
       );
 
-    expect(features).toBeDefined();
-
     const itemId =
-      features!.type === 'features'
-        ? features.props.items[0].id
-        : '';
+      features.props.items[0].id;
 
     store
       .getState()
       .updateCollectionItem(
-        features!.id,
+        features.id,
         'items',
         itemId,
         {
@@ -615,7 +626,7 @@ describe('page-editor-store', () => {
     const updated =
       store.getState().config.sections.find(
         (section) =>
-          section.id === features!.id,
+          section.id === features.id,
       );
 
     if (updated?.type === 'features') {
@@ -635,12 +646,9 @@ describe('page-editor-store', () => {
     const store = createTestStore();
 
     const features =
-      store.getState().config.sections.find(
-        (section) =>
-          section.type === 'features',
+      getFeaturesSection(
+        store.getState().config.sections,
       );
-
-    expect(features).toBeDefined();
 
     const firstItemId =
       features!.type === 'features'
@@ -648,14 +656,12 @@ describe('page-editor-store', () => {
         : '';
 
     const initialCount =
-      features!.type === 'features'
-        ? features.props.items.length
-        : 0;
+      features.props.items.length;
 
     store
       .getState()
       .removeCollectionItem(
-        features!.id,
+        features.id,
         'items',
         firstItemId,
       );
@@ -663,7 +669,7 @@ describe('page-editor-store', () => {
     const updated =
       store.getState().config.sections.find(
         (section) =>
-          section.id === features!.id,
+          section.id === features.id,
       );
 
     if (updated?.type === 'features') {
@@ -691,24 +697,19 @@ describe('page-editor-store', () => {
     const store = createTestStore();
 
     const features =
-      store.getState().config.sections.find(
-        (section) =>
-          section.type === 'features',
+      getFeaturesSection(
+        store.getState().config.sections,
       );
 
-    expect(features).toBeDefined();
-
     const initialIds =
-      features!.type === 'features'
-        ? features.props.items.map(
-            (item) => item.id,
-          )
-        : [];
+      features.props.items.map(
+        (item) => item.id,
+      );
 
     store
       .getState()
       .reorderCollectionItems(
-        features!.id,
+        features.id,
         'items',
         0,
         2,
@@ -717,7 +718,7 @@ describe('page-editor-store', () => {
     const updated =
       store.getState().config.sections.find(
         (section) =>
-          section.id === features!.id,
+          section.id === features.id,
       );
 
     if (updated?.type === 'features') {

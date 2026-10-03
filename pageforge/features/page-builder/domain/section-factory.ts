@@ -1,16 +1,184 @@
 import type {
+  CtaSection,
+  FeaturesSection,
+  FaqSection,
+  HeroSection,
   PageSection,
   SectionType,
+  TeamSection,
+  TestimonialsSection,
 } from './page-schema';
 
-import {
-  createDefaultSection as createSectionFromRegistry,
-} from '../registry/section-registry';
+export function createDefaultSection(
+  type: 'hero',
+): HeroSection;
+
+export function createDefaultSection(
+  type: 'features',
+): FeaturesSection;
+
+export function createDefaultSection(
+  type: 'faq',
+): FaqSection;
+
+export function createDefaultSection(
+  type: 'team',
+): TeamSection;
+
+export function createDefaultSection(
+  type: 'testimonials',
+): TestimonialsSection;
+
+export function createDefaultSection(
+  type: 'cta',
+): CtaSection;
+
+export function createDefaultSection(
+  type: SectionType,
+): PageSection;
 
 export function createDefaultSection(
   type: SectionType,
 ): PageSection {
-  return createSectionFromRegistry(
-    type,
-  );
+  const id = crypto.randomUUID();
+
+  switch (type) {
+    case 'hero':
+      return {
+        id,
+        type: 'hero',
+        enabled: true,
+        props: {
+          title: 'Build something amazing',
+          description:
+            'Tell your visitors what makes your product different.',
+          primaryCtaText: 'Get Started',
+          primaryCtaUrl: '#',
+        },
+      };
+
+    case 'features':
+      return {
+        id,
+        type: 'features',
+        enabled: true,
+        props: {
+          title: 'Everything you need',
+          description:
+            'Highlight the most important benefits of your product.',
+          items: [
+            {
+              id: crypto.randomUUID(),
+              title: 'Feature One',
+              description:
+                'Describe the first benefit of your product.',
+            },
+            {
+              id: crypto.randomUUID(),
+              title: 'Feature Two',
+              description:
+                'Describe the second benefit of your product.',
+            },
+            {
+              id: crypto.randomUUID(),
+              title: 'Feature Three',
+              description:
+                'Describe the third benefit of your product.',
+            },
+          ],
+        },
+      };
+
+    case 'faq':
+      return {
+        id,
+        type: 'faq',
+        enabled: true,
+        props: {
+          title: 'Frequently asked questions',
+          items: [
+            {
+              id: crypto.randomUUID(),
+              question: 'What is PageForge?',
+              answer:
+                'PageForge is a visual page builder for creating and editing landing pages.',
+            },
+            {
+              id: crypto.randomUUID(),
+              question: 'Can I customize my page?',
+              answer:
+                'Yes. You can edit section content directly from the settings panel.',
+            },
+          ],
+        },
+      };
+
+    case 'team':
+      return {
+        id,
+        type: 'team',
+        enabled: true,
+        props: {
+          title: 'Meet the team',
+          description:
+            'Introduce the people building your product.',
+          items: [
+            {
+              id: crypto.randomUUID(),
+              name: 'Alex Morgan',
+              role: 'Co-Founder',
+              bio:
+                'Builds the product and helps shape the company vision.',
+            },
+            {
+              id: crypto.randomUUID(),
+              name: 'Jamie Lee',
+              role: 'Product Designer',
+              bio:
+                'Creates thoughtful experiences for every customer.',
+            },
+            {
+              id: crypto.randomUUID(),
+              name: 'Taylor Smith',
+              role: 'Engineer',
+              bio:
+                'Turns product ideas into reliable software.',
+            },
+          ],
+        },
+      };
+
+    case 'testimonials':
+      return {
+        id,
+        type: 'testimonials',
+        enabled: true,
+        props: {
+          title: 'What our customers say',
+          items: [
+            {
+              id: crypto.randomUUID(),
+              name: 'John Doe',
+              role: 'Founder',
+              quote:
+                'This product made our workflow dramatically simpler.',
+            },
+          ],
+        },
+      };
+
+    case 'cta':
+      return {
+        id,
+        type: 'cta',
+        enabled: true,
+        props: {
+          title: 'Ready to get started?',
+          description:
+            'Create your first landing page today.',
+          buttonText: 'Get Started',
+          buttonUrl: '#',
+        },
+      };
+  }
 }

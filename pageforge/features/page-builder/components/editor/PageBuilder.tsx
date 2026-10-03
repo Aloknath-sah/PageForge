@@ -1,9 +1,17 @@
 'use client';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import SectionList from './SectionList';
 import EditablePreview from './EditablePreview';
 import SectionSettings from './SectionSettings';
-import VersionHistoryPanel from './VersionHistoryPanel';
+const VersionHistoryPanel = dynamic(
+  () => import('./VersionHistoryPanel'),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
+
 import { usePageEditorStore } from '../../providers/page-editor-provider';
 import { useEditorHistoryShortcuts } from '../../hooks/use-editor-history-shortcuts';
 

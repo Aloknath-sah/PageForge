@@ -43,7 +43,7 @@ export default function PropertyField({
   ].join(' ');
 
   return (
-    <label className="block">
+    <label htmlFor={fieldId} className="block">
       <span className="mb-1.5 block text-sm font-medium text-gray-800">
         {label}
         {required && (
@@ -62,6 +62,7 @@ export default function PropertyField({
       {type === 'textarea' ? (
         <textarea
           id={fieldId}
+          aria-label={label}
           value={value}
           placeholder={placeholder}
           onChange={handleChange}
@@ -73,6 +74,7 @@ export default function PropertyField({
       ) : (
         <input
           id={fieldId}
+          aria-label={label}
           type={type === 'url' ? 'url' : 'text'}
           value={value}
           placeholder={placeholder}

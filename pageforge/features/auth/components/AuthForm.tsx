@@ -87,6 +87,30 @@ export default function AuthForm({
         return;
       }
 
+      // If this browser still has another user's session, clear that local
+      // session before creating a different account. With email confirmation
+      // enabled, signUp() returns no new session, so an old session must not
+      // remain active and make the dashboard appear to belong to the old user.
+      const normalizedEmail = email.trim().toLowerCase();
+      const {
+        data: { session: currentSession },
+        error: getSessionError,
+      } = await supabase.auth.getSession();
+
+      if (getSessionError) {
+        throw getSessionError;
+      }
+
+      const currentEmail = currentSession?.user.email?.trim().toLowerCase();
+      if (currentSession && currentEmail !== normalizedEmail) {
+        const { error: signOutError } =
+          await supabase.auth.signOut({ scope: 'local' });
+
+        if (signOutError) {
+          throw signOutError;
+        }
+      }
+
       const callbackUrl =
         `${window.location.origin}/auth/callback`;
 
@@ -95,7 +119,7 @@ export default function AuthForm({
         error: signUpError,
       } =
         await supabase.auth.signUp({
-          email,
+          email: normalizedEmail,
           password,
           options: {
             emailRedirectTo:
@@ -118,7 +142,7 @@ export default function AuthForm({
       }
 
       setMessage(
-        'Account created. Check your email to confirm your account.',
+        'Account created. Check your inbox (and spam folder) and confirm your email before signing in. If you do not confirm it, Supabase will not create a signed-in session.',
       );
     } catch (submitError) {
       setError(

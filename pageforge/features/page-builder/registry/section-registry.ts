@@ -90,7 +90,9 @@ export const sectionRegistry = {
           primaryCtaText:
             'Get Started',
 
-          primaryCtaUrl: '#',
+          primaryCtaUrl: '/auth/sign-up',
+
+          imageUrl: '/images/pageforge-hero.png',
         },
       }),
   },
@@ -233,6 +235,8 @@ export const sectionRegistry = {
 
               bio:
                 'Builds the product and helps shape the company vision.',
+
+              avatarUrl: '/images/team-alex.svg',
             },
 
             {
@@ -246,6 +250,8 @@ export const sectionRegistry = {
 
               bio:
                 'Creates thoughtful experiences for every customer.',
+
+              avatarUrl: '/images/team-jamie.svg',
             },
 
             {
@@ -259,6 +265,8 @@ export const sectionRegistry = {
 
               bio:
                 'Turns product ideas into reliable software.',
+
+              avatarUrl: '/images/team-taylor.svg',
             },
           ],
         },
@@ -298,6 +306,8 @@ export const sectionRegistry = {
 
               quote:
                 'This product made our workflow dramatically simpler.',
+
+              avatarUrl: '/images/testimonial-sarah.svg',
             },
           ],
         },

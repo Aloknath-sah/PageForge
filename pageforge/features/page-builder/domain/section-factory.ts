@@ -53,7 +53,8 @@ export function createDefaultSection(
           description:
             'Tell your visitors what makes your product different.',
           primaryCtaText: 'Get Started',
-          primaryCtaUrl: '#',
+          primaryCtaUrl: '/auth/sign-up',
+          imageUrl: '/images/pageforge-hero.png',
         },
       };
 
@@ -129,6 +130,7 @@ export function createDefaultSection(
               role: 'Co-Founder',
               bio:
                 'Builds the product and helps shape the company vision.',
+              avatarUrl: '/images/team-alex.svg',
             },
             {
               id: crypto.randomUUID(),
@@ -136,6 +138,7 @@ export function createDefaultSection(
               role: 'Product Designer',
               bio:
                 'Creates thoughtful experiences for every customer.',
+              avatarUrl: '/images/team-jamie.svg',
             },
             {
               id: crypto.randomUUID(),
@@ -143,6 +146,7 @@ export function createDefaultSection(
               role: 'Engineer',
               bio:
                 'Turns product ideas into reliable software.',
+              avatarUrl: '/images/team-taylor.svg',
             },
           ],
         },
@@ -162,6 +166,7 @@ export function createDefaultSection(
               role: 'Founder',
               quote:
                 'This product made our workflow dramatically simpler.',
+              avatarUrl: '/images/testimonial-sarah.svg',
             },
           ],
         },

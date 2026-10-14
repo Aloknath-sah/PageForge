@@ -89,7 +89,7 @@ Call log:
     - heading "Build your business faster" [level=1]
     - paragraph: Build faster workflows without repetitive manual work.
     - link "Get Started":
-      - /url: /signup
+      - /url: /auth/signup
     - text: Hero Image
     - heading "Everything you need" [level=2]
     - paragraph: Powerful tools to automate your daily workflow.
@@ -133,7 +133,7 @@ Call log:
     - heading "Ready to get started?" [level=2]
     - paragraph: Create your first landing page in minutes.
     - link "Create Your Page":
-      - /url: /signup
+      - /url: /auth/signup
 - complementary:
   - paragraph: Section settings
   - heading "Hero" [level=2]
@@ -156,7 +156,7 @@ Call log:
   - text: CTA URL
   - textbox "CTA URL":
     - /placeholder: https://example.com
-    - text: /signup
+    - text: /auth/signup
 - status
 ```
 

@@ -160,7 +160,7 @@ describe('SectionSettings', () => {
 
     expect(
       screen.getByDisplayValue(
-        '/signup',
+        '/auth/signup',
       ),
     ).toBeInTheDocument();
   });

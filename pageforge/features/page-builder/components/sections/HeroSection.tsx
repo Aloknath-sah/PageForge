@@ -17,8 +17,7 @@ export default function HeroSection({ props }: HeroSectionProps) {
   // For temporary debugging, log `imageUrl` here. Public page components may
   // render on the server, so those messages can appear in Vercel Runtime Logs
   // rather than the browser console.
-console.log('[HeroSection] incoming imageUrl:', props.imageUrl);
-console.log('[HeroSection] resolved imageUrl:', imageUrl);
+
   return (
     <section className="border-b border-gray-200 bg-white">
       <div className="mx-auto grid min-h-[560px] max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:px-8">

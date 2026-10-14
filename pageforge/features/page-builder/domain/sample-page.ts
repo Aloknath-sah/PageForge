@@ -47,7 +47,7 @@ export const samplePage: PageConfig = {
           'Get Started',
 
         primaryCtaUrl:
-          '/auth/signup',
+          '/auth/sign-up',
       },
     },
 
@@ -247,7 +247,7 @@ export const samplePage: PageConfig = {
           'Create Your Page',
 
         buttonUrl:
-          '/auth/signup',
+          '/auth/sign-up',
       },
     },
   ],

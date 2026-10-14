@@ -51,10 +51,6 @@ export default function HeroSection({ props }: HeroSectionProps) {
             loading="eager"
             fetchPriority="high"
             decoding="async"
-            onError={(event) => {
-              // Avoid repeatedly retrying the same missing default asset.
-              event.currentTarget.style.display = 'none';
-            }}
             className="max-h-[400px] w-full rounded-xl object-cover"
           />
         </div>

@@ -11,7 +11,7 @@ import type {
   TestimonialsProps,
 } from './page-schema';
 
-export const CURRENT_PAGE_SCHEMA_VERSION = 1;
+export const CURRENT_PAGE_SCHEMA_VERSION = 3;
 
 export type PageConfigValidationError = {
   path: string;

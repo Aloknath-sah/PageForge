@@ -2,10 +2,10 @@
 
 'use client';
 
+import { useMemo } from 'react';
+
 import PropertyField from './PropertyField';
 import CollectionField from './CollectionField';
-
-import { useShallow } from 'zustand/react/shallow';
 
 import {
   usePageEditorStore,
@@ -20,61 +20,51 @@ import {
 } from '../../domain/page-validation';
 
 export default function SectionSettings() {
-  const {
-    selectedSection,
-    fieldErrors,
-  } = usePageEditorStore(
-    useShallow((state) => {
-      const id =
-        state.selectedSectionId;
-
-      const selectedSection =
-        state.config.sections.find(
-          (section) =>
-            section.id === id,
-        ) ?? null;
-
-      if (!selectedSection) {
-        return {
-          selectedSection: null,
-          fieldErrors:
-            {} as Record<
-              string,
-              string | undefined
-            >,
-        };
-      }
-
-      const validationResult =
-        validatePageConfig(
-          state.config,
-        );
-
-      const fieldErrors: Record<
-        string,
-        string | undefined
-      > = {};
-
-      for (const error of validationResult.errors) {
-        if (
-          error.sectionId ===
-            selectedSection.id &&
-          error.fieldKey &&
-          !error.collectionKey &&
-          !error.itemId
-        ) {
-          fieldErrors[
-            error.fieldKey
-          ] = error.message;
-        }
-      }
-
-      return {
-        selectedSection,
-        fieldErrors,
-      };
-    }),
+  const config = usePageEditorStore(
+    (state) => state.config,
   );
+
+  const selectedSectionId = usePageEditorStore(
+    (state) => state.selectedSectionId,
+  );
+
+  // Keep the selected section stable until the relevant config or selection changes.
+  const selectedSection = useMemo(
+    () =>
+      config.sections.find(
+        (section) => section.id === selectedSectionId,
+      ) ?? null,
+    [config.sections, selectedSectionId],
+  );
+
+  // Validation is derived from the config, so compute it once per config change.
+  const validationErrors = useMemo(
+    () => validatePageConfig(config).errors,
+    [config],
+  );
+
+  // Memoize this object rather than creating it inside a Zustand selector.
+  const selectedSectionIdForErrors = selectedSection?.id ?? null;
+  const fieldErrors = useMemo(() => {
+    const errors: Record<string, string | undefined> = {};
+
+    if (!selectedSectionIdForErrors) {
+      return errors;
+    }
+
+    for (const error of validationErrors) {
+      if (
+        error.sectionId === selectedSectionIdForErrors &&
+        error.fieldKey &&
+        !error.collectionKey &&
+        !error.itemId
+      ) {
+        errors[error.fieldKey] = error.message;
+      }
+    }
+
+    return errors;
+  }, [validationErrors, selectedSectionIdForErrors]);
 
   const updateSectionField =
     usePageEditorStore(

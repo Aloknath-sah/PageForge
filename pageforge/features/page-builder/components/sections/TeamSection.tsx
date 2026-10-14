@@ -4,24 +4,17 @@ type TeamSectionProps = {
   props: TeamProps;
 };
 
-function getInitials(
-  name: string,
-): string {
+function getInitials(name: string): string {
   return name
     .trim()
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map(
-      (part) =>
-        part.charAt(0).toUpperCase(),
-    )
+    .map((part) => part.charAt(0).toUpperCase())
     .join('');
 }
 
-export default function TeamSection({
-  props,
-}: TeamSectionProps) {
+export default function TeamSection({ props }: TeamSectionProps) {
   return (
     <section className="bg-white">
       <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
@@ -29,7 +22,6 @@ export default function TeamSection({
           <h2 className="text-3xl font-bold tracking-tight text-gray-950 sm:text-4xl">
             {props.title}
           </h2>
-
           {props.description && (
             <p className="mt-4 text-lg leading-8 text-gray-600">
               {props.description}
@@ -38,44 +30,35 @@ export default function TeamSection({
         </div>
 
         <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {props.items.map(
-            (item) => (
-              <article
-                key={item.id}
-                className="rounded-2xl border border-gray-200 bg-gray-50 p-6"
-              >
-                <div className="flex items-center gap-4">
-                  {item.avatarUrl ? (
-                    <img
-                      src={item.avatarUrl}
-                      alt={item.name}
-                      className="h-14 w-14 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-700">
-                      {getInitials(
-                        item.name,
-                      )}
-                    </div>
-                  )}
-
-                  <div className="min-w-0">
-                    <h3 className="truncate text-base font-semibold text-gray-950">
-                      {item.name}
-                    </h3>
-
-                    <p className="text-sm text-gray-500">
-                      {item.role}
-                    </p>
+          {props.items.map((item) => (
+            <article
+              key={item.id}
+              className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-blue-50/50 p-6 shadow-sm"
+            >
+              <div className="flex items-center gap-4">
+                {item.avatarUrl ? (
+                  <img
+                    src={item.avatarUrl}
+                    alt={`${item.name} portrait`}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-16 w-16 shrink-0 rounded-full border border-white object-cover shadow-sm"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+                    {getInitials(item.name)}
                   </div>
+                )}
+                <div className="min-w-0">
+                  <h3 className="truncate text-base font-semibold text-gray-950">
+                    {item.name}
+                  </h3>
+                  <p className="text-sm text-gray-500">{item.role}</p>
                 </div>
-
-                <p className="mt-5 text-sm leading-7 text-gray-600">
-                  {item.bio}
-                </p>
-              </article>
-            ),
-          )}
+              </div>
+              <p className="mt-5 text-sm leading-7 text-gray-600">{item.bio}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>

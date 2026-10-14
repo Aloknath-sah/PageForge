@@ -26,6 +26,8 @@ export default function AuthForm({
     useState('');
   const [password, setPassword] =
     useState('');
+  const [showPassword, setShowPassword] =
+    useState(false);
   const [message, setMessage] =
     useState('');
   const [error, setError] =
@@ -156,8 +158,12 @@ export default function AuthForm({
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
       <div className="mb-8">
+        <a href="/" className="mb-6 inline-flex items-center gap-2 text-sm font-bold tracking-wide text-blue-700" aria-label="PageForge home">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-base text-white">P</span>
+          PAGEFORGE
+        </a>
         <h1 className="text-2xl font-semibold text-gray-950">
           {isLogin
             ? 'Welcome back'
@@ -194,7 +200,13 @@ export default function AuthForm({
             required
             autoComplete="email"
             placeholder="you@example.com"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm !text-slate-900 caret-blue-600 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 [color-scheme:light]"
+            style={{
+              color: '#0f172a',
+              WebkitTextFillColor: '#0f172a',
+              backgroundColor: '#ffffff',
+              caretColor: '#2563eb',
+            }}
           />
         </div>
 
@@ -209,7 +221,7 @@ export default function AuthForm({
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(event) =>
               setPassword(event.target.value)
@@ -221,9 +233,24 @@ export default function AuthForm({
                 ? 'current-password'
                 : 'new-password'
             }
-            placeholder="••••••••"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            placeholder="Enter your password"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 pr-16 text-sm !text-slate-900 caret-blue-600 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 [color-scheme:light]"
+            style={{
+              color: '#0f172a',
+              WebkitTextFillColor: '#0f172a',
+              backgroundColor: '#ffffff',
+              caretColor: '#2563eb',
+            }}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword((visible) => !visible)}
+            className="mt-2 text-xs font-medium text-blue-700 hover:text-blue-800"
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-pressed={showPassword}
+          >
+            {showPassword ? 'Hide password' : 'Show password'}
+          </button>
         </div>
 
         {error && (

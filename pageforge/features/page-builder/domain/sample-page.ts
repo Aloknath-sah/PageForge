@@ -10,10 +10,10 @@ export const samplePage: PageConfig = {
 
   seo: {
     title:
-      'Acme AI — Automate Your Workflow',
+      'PageForge — Build Beautiful Landing Pages',
 
     description:
-      'Automate repetitive business workflows with Acme AI.',
+      'Design, customize, and publish beautiful landing pages without writing frontend code.',
   },
 
   theme: {
@@ -38,16 +38,19 @@ export const samplePage: PageConfig = {
 
       props: {
         title:
-          'Build your business faster',
+          'Create stunning landing pages faster',
 
         description:
-          'Build faster workflows without repetitive manual work.',
+          'Design, customize, and publish beautiful pages in minutes with PageForge.',
 
         primaryCtaText:
-          'Get Started',
+          'Get Started Free',
 
         primaryCtaUrl:
           '/auth/sign-up',
+
+        imageUrl:
+          '/images/pageforge-hero.png',
       },
     },
 
@@ -60,10 +63,10 @@ export const samplePage: PageConfig = {
 
       props: {
         title:
-          'Everything you need',
+          'Everything you need to launch',
 
         description:
-          'Powerful tools to automate your daily workflow.',
+          'A simple toolkit for building, polishing, and publishing your next landing page.',
 
         items: [
           {
@@ -73,7 +76,7 @@ export const samplePage: PageConfig = {
               'Automate',
 
             description:
-              'Automate repetitive tasks and workflows.',
+              'Build a polished page with reusable sections and editable content.',
           },
 
           {
@@ -83,7 +86,7 @@ export const samplePage: PageConfig = {
               'Collaborate',
 
             description:
-              'Work together from a single workspace.',
+              'Keep your pages organized in one personal dashboard.',
           },
 
           {
@@ -93,7 +96,7 @@ export const samplePage: PageConfig = {
               'Measure',
 
             description:
-              'Understand how your workflows perform.',
+              'Preview changes and publish when your page is ready.',
           },
         ],
       },
@@ -156,7 +159,7 @@ export const samplePage: PageConfig = {
           'Meet the team',
 
         description:
-          'The people behind Acme AI.',
+          'A sample team section you can personalize for your own brand.',
 
         items: [
           {
@@ -170,6 +173,9 @@ export const samplePage: PageConfig = {
 
             bio:
               'Builds the product and helps shape the company vision.',
+
+            avatarUrl:
+              '/images/team-alex.svg',
           },
 
           {
@@ -183,6 +189,9 @@ export const samplePage: PageConfig = {
 
             bio:
               'Creates thoughtful experiences for every customer.',
+
+            avatarUrl:
+              '/images/team-jamie.svg',
           },
 
           {
@@ -196,6 +205,9 @@ export const samplePage: PageConfig = {
 
             bio:
               'Turns product ideas into reliable software.',
+
+            avatarUrl:
+              '/images/team-taylor.svg',
           },
         ],
       },
@@ -223,7 +235,10 @@ export const samplePage: PageConfig = {
               'Product Manager',
 
             quote:
-              'We reduced repetitive work significantly.',
+              'PageForge helped us get a polished landing page online in much less time.',
+
+            avatarUrl:
+              '/images/testimonial-sarah.svg',
           },
         ],
       },
@@ -238,10 +253,10 @@ export const samplePage: PageConfig = {
 
       props: {
         title:
-          'Ready to get started?',
+          'Ready to build your landing page?',
 
         description:
-          'Create your first landing page in minutes.',
+          'Bring your idea to life with a page you can customize and publish.',
 
         buttonText:
           'Create Your Page',
